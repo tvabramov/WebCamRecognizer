@@ -4,6 +4,15 @@
 #include <QMainWindow>
 #include <QCamera>
 #include <QCameraImageCapture>
+#include <opencv2/imgproc.hpp>
+
+enum MatColorOrder {
+	MCO_BGR,
+	MCO_RGB,
+	MCO_BGRA = MCO_BGR,
+	MCO_RGBA = MCO_RGB,
+	MCO_ARGB
+};
 
 namespace Ui {
 class MainWindow;
@@ -35,5 +44,8 @@ private:
 	QCamera *mCamera;
 	QCameraImageCapture *mCapturer;
 };
+
+cv::Mat QImageToCvMat(const QImage &inImage, bool inCloneImageData = true);
+QImage cvMatToQImage( const cv::Mat &inMat );
 
 #endif // MAINWINDOW_H

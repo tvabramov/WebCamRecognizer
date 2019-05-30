@@ -5,6 +5,14 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/dnn.hpp>
+#include <opencv2/imgproc.hpp>
+
+using namespace cv;
+using namespace dnn;
+
 Q_DECLARE_METATYPE(QCameraInfo)
 
 MainWindow::MainWindow(QWidget *_parent) :
@@ -41,6 +49,13 @@ MainWindow::MainWindow(QWidget *_parent) :
 	});
 
 	mCamera->start();
+
+	// read an image
+	//cv::Mat image = cv::imread(QString("d://1.jpg").toStdString(), 1);
+	// create image window named "My Image"
+	//cv::namedWindow("My Image");
+	// show the image on window
+	//cv::imshow("My Image", image);
 }
 
 MainWindow::~MainWindow()
@@ -89,7 +104,194 @@ void MainWindow::onImageCaptured(int /*_requestId*/, const QImage& _img)
 	QImage scaledImage = _img.scaled(ui->labelSnapshot->size(),
 		Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
-	ui->labelSnapshot->setPixmap(QPixmap::fromImage(scaledImage));
+	//ui->labelSnapshot->setPixmap(QPixmap::fromImage(scaledImage));
+
+	QVector<QString> classes = { "background", "aeroplane", "bicycle", "bird", "boat",
+		"bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
+		"dog", "horse", "motorbike", "person", "pottedplant", "sheep",
+		"sofa", "train", "tvmonitor"};
+
+	Net net = dnn::readNetFromCaffe(QString("D:/MobileNetSSD_deploy.prototxt.txt").toStdString(), QString("D:/MobileNetSSD_deploy.caffemodel").toStdString());
+
+	Mat frame = QImageToCvMat(scaledImage, true);
+
+
+	//https://web-answers.ru/c/opencv-c-hwnd2mat-skrinshot-gt-blobfromimage.html
+	Mat blob = dnn::blobFromImage(frame, 0.007843, Size(300, 300), Scalar(127.5, 127.5, 127.5));
+
+
+	net.setInput(blob);
+	Mat detections = net.forward();
+	Mat detectionMat(detections.size[2], detections.size[3], CV_32F, detections.ptr<float>());
+	for (int i = 0; i < detectionMat.rows; i++) {
+
+		float confidence = detectionMat.at<float>(i, 2);
+		if (confidence > /*confidenceThreshold*/0.8) {
+			int idx = static_cast<int>(detectionMat.at<float>(i, 1));
+			int xLeftBottom = static_cast<int>(detectionMat.at<float>(i, 3) * frame.cols);
+			int yLeftBottom = static_cast<int>(detectionMat.at<float>(i, 4) * frame.rows);
+			int xRightTop = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
+			int yRightTop = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
+
+			Rect object((int)xLeftBottom, (int)yLeftBottom,
+			(int)(xRightTop - xLeftBottom),
+			(int)(yRightTop - yLeftBottom));
+
+			rectangle(frame, object, Scalar(0, 255, 0), 2);
+
+			std::string label = QString("%1: %2").arg(classes[idx]).arg(confidence * 100).toStdString();
+
+			putText(frame, label, Point(xLeftBottom + 3, yLeftBottom + 15),
+				FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,255,0));
+		}
+	}
+
+	//imshow("frame", frame);
+
+	ui->labelSnapshot->setPixmap(QPixmap::fromImage(cvMatToQImage(frame)));
+}
+
+// https://asmaloney.com/2013/11/code/converting-between-cvmat-and-qimage-or-qpixmap/
+cv::Mat QImageToCvMat(const QImage &inImage, bool inCloneImageData)
+{
+	  switch ( inImage.format() )
+	  {
+		 // 8-bit, 4 channel
+		 case QImage::Format_ARGB32:
+		 case QImage::Format_ARGB32_Premultiplied:
+		 {
+			cv::Mat  mat( inImage.height(), inImage.width(),
+						  CV_8UC4,
+						  const_cast<uchar*>(inImage.bits()),
+						  static_cast<size_t>(inImage.bytesPerLine())
+						  );
+
+			return (inCloneImageData ? mat.clone() : mat);
+		 }
+
+		 // 8-bit, 3 channel
+		 case QImage::Format_RGB32:
+		 {
+			if ( !inCloneImageData )
+			{
+			   qWarning() << "ASM::QImageToCvMat() - Conversion requires cloning so we don't modify the original QImage data";
+			}
+
+			cv::Mat  mat( inImage.height(), inImage.width(),
+						  CV_8UC4,
+						  const_cast<uchar*>(inImage.bits()),
+						  static_cast<size_t>(inImage.bytesPerLine())
+						  );
+
+			cv::Mat  matNoAlpha;
+
+			cv::cvtColor( mat, matNoAlpha, cv::COLOR_BGRA2BGR );   // drop the all-white alpha channel
+
+			return matNoAlpha;
+		 }
+
+		 // 8-bit, 3 channel
+		 case QImage::Format_RGB888:
+		 {
+			if ( !inCloneImageData )
+			{
+			   qWarning() << "ASM::QImageToCvMat() - Conversion requires cloning so we don't modify the original QImage data";
+			}
+
+			QImage   swapped = inImage.rgbSwapped();
+
+			return cv::Mat( swapped.height(), swapped.width(),
+							CV_8UC3,
+							const_cast<uchar*>(swapped.bits()),
+							static_cast<size_t>(swapped.bytesPerLine())
+							).clone();
+		 }
+
+		 // 8-bit, 1 channel
+		 case QImage::Format_Indexed8:
+		 {
+			cv::Mat  mat( inImage.height(), inImage.width(),
+						  CV_8UC1,
+						  const_cast<uchar*>(inImage.bits()),
+						  static_cast<size_t>(inImage.bytesPerLine())
+						  );
+
+			return (inCloneImageData ? mat.clone() : mat);
+		 }
+
+		 default:
+			qWarning() << "ASM::QImageToCvMat() - QImage format not handled in switch:" << inImage.format();
+			break;
+	  }
+
+	  return cv::Mat();
+}
+
+QImage cvMatToQImage( const cv::Mat &inMat )
+{
+	  switch ( inMat.type() )
+	  {
+		 // 8-bit, 4 channel
+		 case CV_8UC4:
+		 {
+			QImage image( inMat.data,
+						  inMat.cols, inMat.rows,
+						  static_cast<int>(inMat.step),
+						  QImage::Format_ARGB32 );
+
+			return image;
+		 }
+
+		 // 8-bit, 3 channel
+		 case CV_8UC3:
+		 {
+			QImage image( inMat.data,
+						  inMat.cols, inMat.rows,
+						  static_cast<int>(inMat.step),
+						  QImage::Format_RGB888 );
+
+			return image.rgbSwapped();
+		 }
+
+		 // 8-bit, 1 channel
+		 case CV_8UC1:
+		 {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
+			QImage image( inMat.data,
+						  inMat.cols, inMat.rows,
+						  static_cast<int>(inMat.step),
+						  QImage::Format_Grayscale8 );
+#else
+			static QVector<QRgb>  sColorTable;
+
+			// only create our color table the first time
+			if ( sColorTable.isEmpty() )
+			{
+			   sColorTable.resize( 256 );
+
+			   for ( int i = 0; i < 256; ++i )
+			   {
+				  sColorTable[i] = qRgb( i, i, i );
+			   }
+			}
+
+			QImage image( inMat.data,
+						  inMat.cols, inMat.rows,
+						  static_cast<int>(inMat.step),
+						  QImage::Format_Indexed8 );
+
+			image.setColorTable( sColorTable );
+#endif
+
+			return image;
+		 }
+
+		 default:
+			qWarning() << "ASM::cvMatToQImage() - cv::Mat image type not handled in switch:" << inMat.type();
+			break;
+	  }
+
+	  return QImage();
 }
 
 void MainWindow::onCapturerErrorOccurred(int /*_id*/, const QCameraImageCapture::Error /*_err*/, const QString &_str)
