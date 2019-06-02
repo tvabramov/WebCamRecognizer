@@ -18,12 +18,50 @@ Q_DECLARE_METATYPE(QCameraInfo)
 MainWindow::MainWindow(QWidget *_parent) :
     QMainWindow(_parent),
     ui(new Ui::MainWindow),
-	mCamera(new QCamera(QCameraInfo::defaultCamera(), this)),
-	mCapturer(new QCameraImageCapture(mCamera, this))
+	mCamera(nullptr),
+	mCapturer(nullptr)
 {
     ui->setupUi(this);
 
-	// Camera
+	QActionGroup *camerasGroup = new QActionGroup(this);
+	camerasGroup->setExclusive(true);
+	for (const QCameraInfo &cameraInfo : QCameraInfo::availableCameras()) {
+		QAction *videoDeviceAction = new QAction(cameraInfo.description(), camerasGroup);
+		videoDeviceAction->setCheckable(true);
+		videoDeviceAction->setData(QVariant::fromValue(cameraInfo));
+		if (cameraInfo == QCameraInfo::defaultCamera())
+			videoDeviceAction->setChecked(true);
+
+		ui->menuDevices->addAction(videoDeviceAction);
+	}
+
+	connect(camerasGroup, &QActionGroup::triggered, this, &MainWindow::onCameraSelected);
+
+	connect(ui->actionToggleCamera, &QAction::toggled, this, &MainWindow::onCameraToggled);
+
+
+	ui->mainToolBar->addAction(ui->actionToggleCamera);
+	ui->mainToolBar->addSeparator();
+	ui->mainToolBar->addAction(ui->actionSettings);
+
+
+	onCameraSelected(camerasGroup->checkedAction());
+}
+
+MainWindow::~MainWindow()
+{
+	delete ui;
+
+	delete mCamera;
+	delete mCapturer;
+}
+
+void MainWindow::setCamera(const QCameraInfo &_cameraInfo)
+{
+	delete mCamera;
+	delete mCapturer;
+
+	mCamera = new QCamera(_cameraInfo);
 
 	connect(mCamera, &QCamera::stateChanged, this, &MainWindow::onCameraStateChanged);
 	connect(mCamera, static_cast<void(QCamera::*)(QCamera::Error)>(&QCamera::error),
@@ -35,6 +73,9 @@ MainWindow::MainWindow(QWidget *_parent) :
 
 	// Capturer
 
+	mCapturer = new QCameraImageCapture(mCamera);
+
+	mCapturer->setCaptureDestination(QCameraImageCapture::CaptureToBuffer);
 	connect(mCapturer, &QCameraImageCapture::readyForCaptureChanged, this, &MainWindow::onReadyForCaptureChanged);
 	connect(mCapturer, &QCameraImageCapture::imageCaptured, this, &MainWindow::onImageCaptured);
 	connect(mCapturer, static_cast<void(QCameraImageCapture::*)(int, QCameraImageCapture::Error, const QString &)>(&QCameraImageCapture::error),
@@ -50,17 +91,23 @@ MainWindow::MainWindow(QWidget *_parent) :
 
 	mCamera->start();
 
-	// read an image
-	//cv::Mat image = cv::imread(QString("d://1.jpg").toStdString(), 1);
-	// create image window named "My Image"
-	//cv::namedWindow("My Image");
-	// show the image on window
-	//cv::imshow("My Image", image);
-}
 
-MainWindow::~MainWindow()
-{
-	delete ui;
+
+
+	//connect(ui->exposureCompensation, SIGNAL(valueChanged(int)), SLOT(setExposureCompensation(int)));
+
+
+  //  updateCameraState(camera->state());
+   // updateLockStatus(camera->lockStatus(), QCamera::UserRequest);
+//    updateRecorderState(mediaRecorder->state());
+
+
+
+//    connect(camera, SIGNAL(lockStatusChanged(QCamera::LockStatus,QCamera::LockChangeReason)),
+//            this, SLOT(updateLockStatus(QCamera::LockStatus,QCamera::LockChangeReason)));
+
+	// Camera
+
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *_event)
@@ -99,6 +146,19 @@ void MainWindow::keyReleaseEvent(QKeyEvent *_event)
 	}
 }
 
+void MainWindow::onCameraSelected(QAction *_action)
+{
+	setCamera(qvariant_cast<QCameraInfo>(_action->data()));
+}
+
+void MainWindow::onCameraToggled(bool _on)
+{
+	if (_on)
+		mCamera->start();
+	else
+		mCamera->stop();
+}
+
 void MainWindow::onImageCaptured(int /*_requestId*/, const QImage& _img)
 {
 	QImage scaledImage = _img.scaled(ui->labelSnapshot->size(),
@@ -111,7 +171,7 @@ void MainWindow::onImageCaptured(int /*_requestId*/, const QImage& _img)
 		"dog", "horse", "motorbike", "person", "pottedplant", "sheep",
 		"sofa", "train", "tvmonitor"};
 
-	Net net = dnn::readNetFromCaffe(QString("D:/MobileNetSSD_deploy.prototxt.txt").toStdString(), QString("D:/MobileNetSSD_deploy.caffemodel").toStdString());
+	Net net = dnn::readNetFromCaffe(QString("C:/MobileNetSSD_deploy.prototxt.txt").toStdString(), QString("C:/MobileNetSSD_deploy.caffemodel").toStdString());
 
 	Mat frame = QImageToCvMat(scaledImage, true);
 
@@ -299,22 +359,32 @@ void MainWindow::onCapturerErrorOccurred(int /*_id*/, const QCameraImageCapture:
 	QMessageBox::warning(this, tr("Image Capture Error"), _str);
 }
 
-void MainWindow::onCameraStateChanged(QCamera::State /*_state*/)
+void MainWindow::onCameraStateChanged(QCamera::State _state)
 {
-    /*switch (state) {
-    case QCamera::ActiveState:
-        ui->actionStartCamera->setEnabled(false);
-        ui->actionStopCamera->setEnabled(true);
-        ui->captureWidget->setEnabled(true);
-        ui->actionSettings->setEnabled(true);
-        break;
-    case QCamera::UnloadedState:
-    case QCamera::LoadedState:
-        ui->actionStartCamera->setEnabled(true);
-        ui->actionStopCamera->setEnabled(false);
-        ui->captureWidget->setEnabled(false);
-        ui->actionSettings->setEnabled(false);
-    }*/
+	switch (_state) {
+		case QCamera::ActiveState:
+
+			ui->actionToggleCamera->blockSignals(true);
+			ui->actionToggleCamera->setChecked(true);
+			ui->actionToggleCamera->setText(tr("Camera Off"));
+			ui->actionToggleCamera->setToolTip("Switch the Camera Off");
+			ui->actionToggleCamera->setStatusTip("Switch the Camera Off");
+			ui->actionToggleCamera->setWhatsThis("Switch the Camera Off");
+			ui->actionToggleCamera->blockSignals(false);
+
+			ui->actionSettings->setEnabled(true);
+			break;
+		default:
+			ui->actionToggleCamera->blockSignals(true);
+			ui->actionToggleCamera->setChecked(false);
+			ui->actionToggleCamera->setText(tr("Camera On"));
+			ui->actionToggleCamera->setToolTip("Switch the Camera On");
+			ui->actionToggleCamera->setStatusTip("Switch the Camera On");
+			ui->actionToggleCamera->setWhatsThis("Switch the Camera On");
+			ui->actionToggleCamera->blockSignals(false);
+
+			ui->actionSettings->setEnabled(false);
+	}
 }
 
 void MainWindow::onCameraErrorOccurred(QCamera::Error /*_err*/)

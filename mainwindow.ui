@@ -23,6 +23,15 @@
       <height>201</height>
      </rect>
     </property>
+    <property name="statusTip">
+     <string>Viewfinder Screen</string>
+    </property>
+    <property name="whatsThis">
+     <string>Viewfinder Screen</string>
+    </property>
+    <property name="accessibleName">
+     <string>Viewfinder Screen</string>
+    </property>
    </widget>
    <widget class="QPushButton" name="buttonGetShapshot">
     <property name="geometry">
@@ -60,6 +69,23 @@
      <height>21</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionToggleCamera"/>
+    <addaction name="separator"/>
+    <addaction name="actionSettings"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuDevices">
+    <property name="title">
+     <string>Devices</string>
+    </property>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuDevices"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -70,6 +96,51 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionExit">
+   <property name="icon">
+    <iconset resource="res/res.qrc">
+     <normaloff>:/images/power.png</normaloff>:/images/power.png</iconset>
+   </property>
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionToggleCamera">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="res/res.qrc">
+     <normaloff>:/images/camera.png</normaloff>:/images/camera.png</iconset>
+   </property>
+   <property name="text">
+    <string>Toggle Camera</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="icon">
+    <iconset resource="res/res.qrc">
+     <normaloff>:/images/settings.png</normaloff>:/images/settings.png</iconset>
+   </property>
+   <property name="text">
+    <string>Settings</string>
+   </property>
+   <property name="iconText">
+    <string>Settings</string>
+   </property>
+   <property name="toolTip">
+    <string>Current Device Settings</string>
+   </property>
+   <property name="statusTip">
+    <string>Current Device Settings</string>
+   </property>
+   <property name="whatsThis">
+    <string>Current Device Settings</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -80,6 +151,8 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="res/res.qrc"/>
+ </resources>
  <connections/>
 </ui>

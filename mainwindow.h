@@ -28,6 +28,8 @@ public:
 
 private slots:
 
+	void onCameraSelected(QAction *_action);
+	void onCameraToggled(bool _on);
 	void onCapturerErrorOccurred(int _id, QCameraImageCapture::Error _err, const QString &_str);
 	void onCameraErrorOccurred(QCamera::Error _err);
 	void onCameraStateChanged(QCamera::State _state);
@@ -40,9 +42,10 @@ protected:
 
 private:
     Ui::MainWindow *ui;
-
 	QCamera *mCamera;
 	QCameraImageCapture *mCapturer;
+
+	void setCamera(const QCameraInfo &_cameraInfo);
 };
 
 cv::Mat QImageToCvMat(const QImage &inImage, bool inCloneImageData = true);
