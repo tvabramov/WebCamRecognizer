@@ -30,11 +30,15 @@ private slots:
 
 	void onCameraSelected(QAction *_action);
 	void onCameraToggled(bool _on);
+	void onLockToggled(bool _on);
 	void onCapturerErrorOccurred(int _id, QCameraImageCapture::Error _err, const QString &_str);
 	void onCameraErrorOccurred(QCamera::Error _err);
 	void onCameraStateChanged(QCamera::State _state);
+	void onLockStatusChanged(QCamera::LockStatus _status, QCamera::LockChangeReason _reason);
 	void onImageCaptured(int _requestId, const QImage &_img);
 	void onReadyForCaptureChanged(bool _ready);
+	void onGetShapshotClicked();
+	void onExposureCompensationSetted(int _index);
 
 protected:
 	void keyPressEvent(QKeyEvent *_event);

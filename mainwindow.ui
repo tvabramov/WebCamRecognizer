@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>748</width>
-    <height>543</height>
+    <height>608</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -59,6 +59,44 @@
      <string/>
     </property>
    </widget>
+   <widget class="QLabel" name="labelExposureCompensation">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>311</y>
+      <width>120</width>
+      <height>13</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Exposure Compensation:</string>
+    </property>
+   </widget>
+   <widget class="QSlider" name="sliderExposureCompensation">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>330</y>
+      <width>120</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="minimum">
+     <number>-4</number>
+    </property>
+    <property name="maximum">
+     <number>4</number>
+    </property>
+    <property name="pageStep">
+     <number>2</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+    <property name="tickPosition">
+     <enum>QSlider::TicksAbove</enum>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -74,10 +112,7 @@
      <string>File</string>
     </property>
     <addaction name="actionToggleCamera"/>
-    <addaction name="separator"/>
-    <addaction name="actionSettings"/>
-    <addaction name="separator"/>
-    <addaction name="actionExit"/>
+    <addaction name="actionToggleLock"/>
    </widget>
    <widget class="QMenu" name="menuDevices">
     <property name="title">
@@ -119,26 +154,35 @@
    <property name="text">
     <string>Toggle Camera</string>
    </property>
+   <property name="statusTip">
+    <string>Toggle Camera</string>
+   </property>
+   <property name="whatsThis">
+    <string>Toggle Camera</string>
+   </property>
   </action>
-  <action name="actionSettings">
+  <action name="actionToggleLock">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="res/res.qrc">
      <normaloff>:/images/settings.png</normaloff>:/images/settings.png</iconset>
    </property>
    <property name="text">
-    <string>Settings</string>
+    <string>Toggle Lock</string>
    </property>
    <property name="iconText">
-    <string>Settings</string>
+    <string>Toggle Lock</string>
    </property>
    <property name="toolTip">
-    <string>Current Device Settings</string>
+    <string>Toggle Lock</string>
    </property>
    <property name="statusTip">
-    <string>Current Device Settings</string>
+    <string>Toggle Lock</string>
    </property>
    <property name="whatsThis">
-    <string>Current Device Settings</string>
+    <string>Toggle Lock</string>
    </property>
   </action>
  </widget>

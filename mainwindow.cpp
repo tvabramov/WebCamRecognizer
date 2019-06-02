@@ -23,6 +23,12 @@ MainWindow::MainWindow(QWidget *_parent) :
 {
     ui->setupUi(this);
 
+	// General
+
+	connect(ui->buttonGetShapshot, &QPushButton::clicked, this, &MainWindow::onGetShapshotClicked);
+
+	// Camera selection actions
+
 	QActionGroup *camerasGroup = new QActionGroup(this);
 	camerasGroup->setExclusive(true);
 	for (const QCameraInfo &cameraInfo : QCameraInfo::availableCameras()) {
@@ -38,12 +44,14 @@ MainWindow::MainWindow(QWidget *_parent) :
 	connect(camerasGroup, &QActionGroup::triggered, this, &MainWindow::onCameraSelected);
 
 	connect(ui->actionToggleCamera, &QAction::toggled, this, &MainWindow::onCameraToggled);
+	connect(ui->actionToggleLock, &QAction::toggled, this, &MainWindow::onLockToggled);
 
+	// Tool bar
 
 	ui->mainToolBar->addAction(ui->actionToggleCamera);
-	ui->mainToolBar->addSeparator();
-	ui->mainToolBar->addAction(ui->actionSettings);
+	ui->mainToolBar->addAction(ui->actionToggleLock);
 
+	// For consistency
 
 	onCameraSelected(camerasGroup->checkedAction());
 }
@@ -66,10 +74,16 @@ void MainWindow::setCamera(const QCameraInfo &_cameraInfo)
 	connect(mCamera, &QCamera::stateChanged, this, &MainWindow::onCameraStateChanged);
 	connect(mCamera, static_cast<void(QCamera::*)(QCamera::Error)>(&QCamera::error),
 		this, &MainWindow::onCameraErrorOccurred);
+	connect(ui->sliderExposureCompensation, &QSlider::valueChanged, this, &MainWindow::onExposureCompensationSetted);
+	connect(mCamera, static_cast<void(QCamera::*)(QCamera::LockStatus, QCamera::LockChangeReason)>(&QCamera::lockStatusChanged),
+		this, &MainWindow::onLockStatusChanged);
 
 	mCamera->setViewfinder(ui->viewFinder);
 
+	ui->actionToggleLock->setEnabled(mCamera->supportedLocks() != QCamera::NoLock && mCamera->state() == QCamera::ActiveState);
+
 	onCameraStateChanged(mCamera->state());
+	onLockStatusChanged(mCamera->lockStatus(), QCamera::UserRequest);
 
 	// Capturer
 
@@ -85,20 +99,10 @@ void MainWindow::setCamera(const QCameraInfo &_cameraInfo)
 
 	// Other
 
-	connect(ui->buttonGetShapshot, &QPushButton::clicked, mCapturer, [this](){
-		mCapturer->capture();
-	});
-
 	mCamera->start();
 
 
-
-
-	//connect(ui->exposureCompensation, SIGNAL(valueChanged(int)), SLOT(setExposureCompensation(int)));
-
-
-  //  updateCameraState(camera->state());
-   // updateLockStatus(camera->lockStatus(), QCamera::UserRequest);
+   //
 //    updateRecorderState(mediaRecorder->state());
 
 
@@ -159,8 +163,17 @@ void MainWindow::onCameraToggled(bool _on)
 		mCamera->stop();
 }
 
+void MainWindow::onLockToggled(bool _on)
+{
+	if (_on)
+		mCamera->searchAndLock();
+	else
+		mCamera->unlock();
+}
+
 void MainWindow::onImageCaptured(int /*_requestId*/, const QImage& _img)
 {
+
 	QImage scaledImage = _img.scaled(ui->labelSnapshot->size(),
 		Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
@@ -186,7 +199,7 @@ void MainWindow::onImageCaptured(int /*_requestId*/, const QImage& _img)
 	for (int i = 0; i < detectionMat.rows; i++) {
 
 		float confidence = detectionMat.at<float>(i, 2);
-		if (confidence > /*confidenceThreshold*/0.8) {
+		if (confidence > 0.8) { //confidenceThreshold
 			int idx = static_cast<int>(detectionMat.at<float>(i, 1));
 			int xLeftBottom = static_cast<int>(detectionMat.at<float>(i, 3) * frame.cols);
 			int yLeftBottom = static_cast<int>(detectionMat.at<float>(i, 4) * frame.rows);
@@ -372,7 +385,8 @@ void MainWindow::onCameraStateChanged(QCamera::State _state)
 			ui->actionToggleCamera->setWhatsThis("Switch the Camera Off");
 			ui->actionToggleCamera->blockSignals(false);
 
-			ui->actionSettings->setEnabled(true);
+			ui->actionToggleLock->setEnabled(mCamera->supportedLocks() != QCamera::NoLock);
+
 			break;
 		default:
 			ui->actionToggleCamera->blockSignals(true);
@@ -383,7 +397,32 @@ void MainWindow::onCameraStateChanged(QCamera::State _state)
 			ui->actionToggleCamera->setWhatsThis("Switch the Camera On");
 			ui->actionToggleCamera->blockSignals(false);
 
-			ui->actionSettings->setEnabled(false);
+			ui->actionToggleLock->setEnabled(false);
+	}
+}
+
+void MainWindow::onLockStatusChanged(QCamera::LockStatus _status, QCamera::LockChangeReason /*_reason*/)
+{
+	switch (_status) {
+		case QCamera::Unlocked:
+			ui->actionToggleLock->blockSignals(true);
+			ui->actionToggleLock->setChecked(false);
+			ui->actionToggleLock->setText(tr("Lock Camera"));
+			ui->actionToggleLock->setToolTip("Lock Camera");
+			ui->actionToggleLock->setStatusTip("Lock Camera");
+			ui->actionToggleLock->setWhatsThis("Lock Camera");
+			ui->actionToggleLock->blockSignals(false);
+
+			break;
+
+		default:
+			ui->actionToggleLock->blockSignals(true);
+			ui->actionToggleLock->setChecked(true);
+			ui->actionToggleLock->setText(tr("Unlock Camera"));
+			ui->actionToggleLock->setToolTip("Unlock Camera");
+			ui->actionToggleLock->setStatusTip("Unlock Camera");
+			ui->actionToggleLock->setWhatsThis("Unlock Camera");
+			ui->actionToggleLock->blockSignals(false);
 	}
 }
 
@@ -397,3 +436,12 @@ void MainWindow::onReadyForCaptureChanged(bool _ready)
 	ui->buttonGetShapshot->setEnabled(_ready);
 }
 
+void MainWindow::onGetShapshotClicked()
+{
+	mCapturer->capture();
+}
+
+void MainWindow::onExposureCompensationSetted(int _index)
+{
+	mCamera->exposure()->setExposureCompensation(_index * 0.5);
+}
