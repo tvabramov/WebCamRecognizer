@@ -5,14 +5,7 @@
 #include <QCamera>
 #include <opencv2/imgproc.hpp>
 #include "capturablevideosurface.h"
-
-//enum MatColorOrder {
-//	MCO_BGR,
-//	MCO_RGB,
-//	MCO_BGRA = MCO_BGR,
-//	MCO_RGBA = MCO_RGB,
-//	MCO_ARGB
-//};
+#include "mobilenetssdrecognizer.h"
 
 namespace Ui {
 class MainWindow;
@@ -37,6 +30,7 @@ private slots:
 	void onImageCaptured(QImage _img);
 	void onReadyForCaptureChanged(bool _ready);
 	void onExposureCompensationSetted(int _index);
+	void onConfidenceThresholdSetted(int _value);
 
 protected:
 	void keyPressEvent(QKeyEvent *_event);
@@ -46,6 +40,8 @@ private:
     Ui::MainWindow *ui;
 	QCamera *mCamera;
 	CapturableVideoSurface *mSurface;
+	MobileNetSSDRecognizer *mRecognizer;
+
 	void setCamera(const QCameraInfo &_cameraInfo);
 };
 

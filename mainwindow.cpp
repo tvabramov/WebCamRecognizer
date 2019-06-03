@@ -10,6 +10,8 @@
 #include <opencv2/dnn.hpp>
 #include <opencv2/imgproc.hpp>
 
+
+
 using namespace cv;
 using namespace dnn;
 
@@ -18,7 +20,8 @@ Q_DECLARE_METATYPE(QCameraInfo)
 MainWindow::MainWindow(QWidget *_parent) :
     QMainWindow(_parent),
     ui(new Ui::MainWindow),
-	mCamera(nullptr)
+	mCamera(nullptr),
+	mRecognizer(nullptr)
 {
     ui->setupUi(this);
 
@@ -47,6 +50,12 @@ MainWindow::MainWindow(QWidget *_parent) :
 	connect(ui->actionToggleCamera, &QAction::toggled, this, &MainWindow::onCameraToggled);
 	connect(ui->actionToggleLock, &QAction::toggled, this, &MainWindow::onLockToggled);
 
+	// Recognizer
+	mRecognizer = new MobileNetSSDRecognizer(nullptr);
+
+	connect(mSurface, &CapturableVideoSurface::newSnapshot, mRecognizer, &MobileNetSSDRecognizer::recognize);
+	//connect(ui->sliderConfidenceThreshold, &QSlider::valueChanged, mRecognizer, &MobileNetSSDRecognizer::setConfidenceThreshold);
+
 	// Tool bar
 
 	ui->mainToolBar->addAction(ui->actionToggleCamera);
@@ -55,6 +64,7 @@ MainWindow::MainWindow(QWidget *_parent) :
 	// For consistency
 
 	onCameraSelected(camerasGroup->checkedAction());
+	onConfidenceThresholdSetted(ui->sliderConfidenceThreshold->value());
 }
 
 MainWindow::~MainWindow()
@@ -62,6 +72,7 @@ MainWindow::~MainWindow()
 	delete ui;
 
 	delete mCamera;
+	delete mRecognizer;
 }
 
 void MainWindow::setCamera(const QCameraInfo &_cameraInfo)
@@ -81,10 +92,11 @@ void MainWindow::setCamera(const QCameraInfo &_cameraInfo)
 
 	ui->actionToggleLock->setEnabled(mCamera->supportedLocks() != QCamera::NoLock && mCamera->state() == QCamera::ActiveState);
 
+	// For consistency
+
 	onCameraStateChanged(mCamera->state());
 	onLockStatusChanged(mCamera->lockStatus(), QCamera::UserRequest);
-
-	// Other
+	onExposureCompensationSetted(ui->sliderExposureCompensation->value());
 
 	mCamera->start();
 }
@@ -422,4 +434,9 @@ void MainWindow::onReadyForCaptureChanged(bool _ready)
 void MainWindow::onExposureCompensationSetted(int _index)
 {
 	mCamera->exposure()->setExposureCompensation(_index * 0.5);
+}
+
+void MainWindow::onConfidenceThresholdSetted(int _value)
+{
+//	mRecognizer->setConfidenceThreshold(static_cast<double>(_value) / 100.0);
 }

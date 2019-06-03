@@ -115,6 +115,32 @@
         </widget>
        </item>
        <item>
+        <widget class="QLabel" name="labelConfidenceThreshold">
+         <property name="text">
+          <string>Confidence Threshold:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QSlider" name="sliderConfidenceThreshold">
+         <property name="maximum">
+          <number>100</number>
+         </property>
+         <property name="value">
+          <number>80</number>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="tickPosition">
+          <enum>QSlider::TicksAbove</enum>
+         </property>
+         <property name="tickInterval">
+          <number>5</number>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer name="verticalSpacer_2">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -167,7 +193,7 @@
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionExit">
    <property name="icon">
-    <iconset resource="res/res.qrc">
+    <iconset>
      <normaloff>:/images/power.png</normaloff>:/images/power.png</iconset>
    </property>
    <property name="text">
