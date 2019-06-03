@@ -18,16 +18,15 @@ Q_DECLARE_METATYPE(QCameraInfo)
 MainWindow::MainWindow(QWidget *_parent) :
     QMainWindow(_parent),
     ui(new Ui::MainWindow),
-	mCamera(nullptr),
-	mCapturer(nullptr)
+	mCamera(nullptr)
 {
     ui->setupUi(this);
 
-	mSurface = new CapturableVideoSurface(ui->labelSnapshot, this);
-
 	// General
 
-	connect(ui->buttonGetShapshot, &QPushButton::clicked, this, &MainWindow::onGetShapshotClicked);
+	mSurface = new CapturableVideoSurface(ui->labelViewFinder, this);
+	connect(ui->buttonGetShapshot, &QPushButton::clicked, mSurface, &CapturableVideoSurface::querySnapshot);
+	connect(mSurface, &CapturableVideoSurface::newSnapshot, this, &MainWindow::onImageCaptured);
 
 	// Camera selection actions
 
@@ -63,13 +62,11 @@ MainWindow::~MainWindow()
 	delete ui;
 
 	delete mCamera;
-	delete mCapturer;
 }
 
 void MainWindow::setCamera(const QCameraInfo &_cameraInfo)
 {
 	delete mCamera;
-	delete mCapturer;
 
 	mCamera = new QCamera(_cameraInfo);
 
@@ -87,33 +84,9 @@ void MainWindow::setCamera(const QCameraInfo &_cameraInfo)
 	onCameraStateChanged(mCamera->state());
 	onLockStatusChanged(mCamera->lockStatus(), QCamera::UserRequest);
 
-	// Capturer
-
-	mCapturer = new QCameraImageCapture(mCamera);
-
-	mCapturer->setCaptureDestination(QCameraImageCapture::CaptureToBuffer);
-	connect(mCapturer, &QCameraImageCapture::readyForCaptureChanged, this, &MainWindow::onReadyForCaptureChanged);
-	connect(mCapturer, &QCameraImageCapture::imageCaptured, this, &MainWindow::onImageCaptured);
-	connect(mCapturer, static_cast<void(QCameraImageCapture::*)(int, QCameraImageCapture::Error, const QString &)>(&QCameraImageCapture::error),
-		this, &MainWindow::onCapturerErrorOccurred);
-
-	onReadyForCaptureChanged(mCapturer->isReadyForCapture());
-
 	// Other
 
 	mCamera->start();
-
-
-   //
-//    updateRecorderState(mediaRecorder->state());
-
-
-
-//    connect(camera, SIGNAL(lockStatusChanged(QCamera::LockStatus,QCamera::LockChangeReason)),
-//            this, SLOT(updateLockStatus(QCamera::LockStatus,QCamera::LockChangeReason)));
-
-	// Camera
-
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *_event)
@@ -129,7 +102,7 @@ void MainWindow::keyPressEvent(QKeyEvent *_event)
 			break;
 		case Qt::Key_Camera:
 			if (mCamera->captureMode() == QCamera::CaptureStillImage)
-				mCapturer->capture();
+//				mCapturer->capture();
 			_event->accept();
 			break;
 		default:
@@ -173,7 +146,7 @@ void MainWindow::onLockToggled(bool _on)
 		mCamera->unlock();
 }
 
-void MainWindow::onImageCaptured(int /*_requestId*/, const QImage& _img)
+void MainWindow::onImageCaptured(QImage _img)
 {
 
 	QImage scaledImage = _img.scaled(ui->labelSnapshot->size(),
@@ -369,11 +342,6 @@ QImage cvMatToQImage( const cv::Mat &inMat )
 	  return QImage();
 }
 
-void MainWindow::onCapturerErrorOccurred(int /*_id*/, const QCameraImageCapture::Error /*_err*/, const QString &_str)
-{
-	QMessageBox::warning(this, tr("Image Capture Error"), _str);
-}
-
 void MainWindow::onCameraStateChanged(QCamera::State _state)
 {
 	switch (_state) {
@@ -409,10 +377,10 @@ void MainWindow::onLockStatusChanged(QCamera::LockStatus _status, QCamera::LockC
 		case QCamera::Unlocked:
 			ui->actionToggleLock->blockSignals(true);
 			ui->actionToggleLock->setChecked(false);
-			ui->actionToggleLock->setText(tr("Lock Camera"));
-			ui->actionToggleLock->setToolTip("Lock Camera");
-			ui->actionToggleLock->setStatusTip("Lock Camera");
-			ui->actionToggleLock->setWhatsThis("Lock Camera");
+			ui->actionToggleLock->setText(tr("Focus and Lock Camera"));
+			ui->actionToggleLock->setToolTip("Focus and Lock Camera");
+			ui->actionToggleLock->setStatusTip("Focus and Lock Camera");
+			ui->actionToggleLock->setWhatsThis("Focus and Lock Camera");
 			ui->actionToggleLock->blockSignals(false);
 
 			break;
@@ -436,11 +404,6 @@ void MainWindow::onCameraErrorOccurred(QCamera::Error /*_err*/)
 void MainWindow::onReadyForCaptureChanged(bool _ready)
 {
 	ui->buttonGetShapshot->setEnabled(_ready);
-}
-
-void MainWindow::onGetShapshotClicked()
-{
-	mCapturer->capture();
 }
 
 void MainWindow::onExposureCompensationSetted(int _index)

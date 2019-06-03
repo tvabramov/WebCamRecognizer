@@ -3,17 +3,16 @@
 
 #include <QMainWindow>
 #include <QCamera>
-#include <QCameraImageCapture>
 #include <opencv2/imgproc.hpp>
 #include "capturablevideosurface.h"
 
-enum MatColorOrder {
-	MCO_BGR,
-	MCO_RGB,
-	MCO_BGRA = MCO_BGR,
-	MCO_RGBA = MCO_RGB,
-	MCO_ARGB
-};
+//enum MatColorOrder {
+//	MCO_BGR,
+//	MCO_RGB,
+//	MCO_BGRA = MCO_BGR,
+//	MCO_RGBA = MCO_RGB,
+//	MCO_ARGB
+//};
 
 namespace Ui {
 class MainWindow;
@@ -32,13 +31,11 @@ private slots:
 	void onCameraSelected(QAction *_action);
 	void onCameraToggled(bool _on);
 	void onLockToggled(bool _on);
-	void onCapturerErrorOccurred(int _id, QCameraImageCapture::Error _err, const QString &_str);
 	void onCameraErrorOccurred(QCamera::Error _err);
 	void onCameraStateChanged(QCamera::State _state);
 	void onLockStatusChanged(QCamera::LockStatus _status, QCamera::LockChangeReason _reason);
-	void onImageCaptured(int _requestId, const QImage &_img);
+	void onImageCaptured(QImage _img);
 	void onReadyForCaptureChanged(bool _ready);
-	void onGetShapshotClicked();
 	void onExposureCompensationSetted(int _index);
 
 protected:
@@ -48,7 +45,6 @@ protected:
 private:
     Ui::MainWindow *ui;
 	QCamera *mCamera;
-	QCameraImageCapture *mCapturer;
 	CapturableVideoSurface *mSurface;
 	void setCamera(const QCameraInfo &_cameraInfo);
 };

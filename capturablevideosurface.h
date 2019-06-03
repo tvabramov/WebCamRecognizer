@@ -16,8 +16,15 @@ public:
 
 	bool present(const QVideoFrame &_frame);
 
+signals:
+	void newSnapshot(QImage _img);
+
+public slots:
+	void querySnapshot();
+
 private:
 	QLabel *mLabel;
+	bool mSnapshotQueried;
 };
 
 #endif // CAPTURABLEVIDEOSURFACE_H
