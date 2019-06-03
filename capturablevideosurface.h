@@ -24,7 +24,7 @@ public slots:
 
 private:
 	QLabel *mLabel;
-	bool mSnapshotQueried;
+	int mSnapshotQueried;
 };
 
 #endif // CAPTURABLEVIDEOSURFACE_H

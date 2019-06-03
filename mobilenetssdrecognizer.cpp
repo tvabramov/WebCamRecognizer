@@ -1,7 +1,6 @@
 #include <QFile>
 #include <QRect>
 #include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include "mobilenetssdrecognizer.h"
 
@@ -32,6 +31,10 @@ void MobileNetSSDRecognizer::recognize(QImage _image)
 {
 	if (_image.format() != QImage::Format_RGB32)
 		emit recognationFailed(tr("Incorrect image format"));
+
+	// Ограничиваем размер
+	_image = _image.scaled(QSize(640, 480),
+		Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
 	Mat frame;
 	cvtColor(Mat(_image.height(), _image.width(), CV_8UC4, const_cast<uchar*>(_image.bits()),
@@ -65,11 +68,5 @@ void MobileNetSSDRecognizer::recognize(QImage _image)
 	rec.image = _image;
 
 	emit newRecognation(rec);
-	//imshow("frame", frame);
-
-	//ui->labelSnapshot->setPixmap(QPixmap::fromImage(cvMatToQImage(frame)));
-
-	//return matNoAlpha;
-
 }
 

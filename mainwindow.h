@@ -3,7 +3,6 @@
 
 #include <QMainWindow>
 #include <QCamera>
-#include <opencv2/imgproc.hpp>
 #include "capturablevideosurface.h"
 #include "mobilenetssdrecognizer.h"
 
@@ -20,17 +19,16 @@ public:
     ~MainWindow();
 
 private slots:
-
 	void onCameraSelected(QAction *_action);
 	void onCameraToggled(bool _on);
 	void onLockToggled(bool _on);
+	void onInfiniteRecognitionToggled(bool _on);
 	void onCameraErrorOccurred(QCamera::Error _err);
 	void onCameraStateChanged(QCamera::State _state);
 	void onLockStatusChanged(QCamera::LockStatus _status, QCamera::LockChangeReason _reason);
-	void onImageCaptured(QImage _img);
-	void onReadyForCaptureChanged(bool _ready);
 	void onExposureCompensationSetted(int _index);
-	void onConfidenceThresholdSetted(int _value);
+	void onNewRecognation(Recognation _rec);
+	void onRecognationError(QString _reason);
 
 protected:
 	void keyPressEvent(QKeyEvent *_event);
@@ -44,8 +42,5 @@ private:
 
 	void setCamera(const QCameraInfo &_cameraInfo);
 };
-
-cv::Mat QImageToCvMat(const QImage &inImage, bool inCloneImageData = true);
-QImage cvMatToQImage( const cv::Mat &inMat );
 
 #endif // MAINWINDOW_H

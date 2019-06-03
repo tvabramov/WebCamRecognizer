@@ -73,13 +73,6 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="buttonGetShapshot">
-         <property name="text">
-          <string>PushButton</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -173,6 +166,8 @@
     </property>
     <addaction name="actionToggleCamera"/>
     <addaction name="actionToggleLock"/>
+    <addaction name="actionRecognize"/>
+    <addaction name="actionInfiniteRecognition"/>
    </widget>
    <widget class="QMenu" name="menuDevices">
     <property name="title">
@@ -243,6 +238,31 @@
    </property>
    <property name="whatsThis">
     <string>Toggle Lock</string>
+   </property>
+  </action>
+  <action name="actionRecognize">
+   <property name="text">
+    <string>Recognize</string>
+   </property>
+   <property name="statusTip">
+    <string>Recognize</string>
+   </property>
+   <property name="whatsThis">
+    <string>Recognize</string>
+   </property>
+  </action>
+  <action name="actionInfiniteRecognition">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Infinite Recognition</string>
+   </property>
+   <property name="statusTip">
+    <string>Infinite Recognition</string>
+   </property>
+   <property name="whatsThis">
+    <string>Infinite Recognition</string>
    </property>
   </action>
  </widget>

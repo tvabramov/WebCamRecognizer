@@ -4,7 +4,7 @@
 CapturableVideoSurface::CapturableVideoSurface(QLabel *_label, QObject *_parent) :
 	QAbstractVideoSurface(_parent),
 	mLabel(_label),
-	mSnapshotQueried(false)
+	mSnapshotQueried(0)
 {
 }
 
@@ -41,10 +41,9 @@ bool CapturableVideoSurface::present(const QVideoFrame &_frame)
 
 	frametodraw.unmap();
 
-	if (mSnapshotQueried) {
-
+	if (mSnapshotQueried > 0) {
 		emit newSnapshot(image);
-		mSnapshotQueried = false;
+		mSnapshotQueried--;
 	}
 
 	mLabel->setPixmap(QPixmap::fromImage(image).scaled(mLabel->width(), mLabel->height(), Qt::KeepAspectRatio));	
@@ -56,7 +55,7 @@ bool CapturableVideoSurface::present(const QVideoFrame &_frame)
 
 void CapturableVideoSurface::querySnapshot()
 {
-	mSnapshotQueried = true;
+	++mSnapshotQueried;
 }
 
 

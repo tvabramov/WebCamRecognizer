@@ -5,16 +5,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/dnn.hpp>
-#include <opencv2/imgproc.hpp>
-
-
-
-using namespace cv;
-using namespace dnn;
-
 Q_DECLARE_METATYPE(QCameraInfo)
 
 MainWindow::MainWindow(QWidget *_parent) :
@@ -28,8 +18,8 @@ MainWindow::MainWindow(QWidget *_parent) :
 	// General
 
 	mSurface = new CapturableVideoSurface(ui->labelViewFinder, this);
-	connect(ui->buttonGetShapshot, &QPushButton::clicked, mSurface, &CapturableVideoSurface::querySnapshot);
-	connect(mSurface, &CapturableVideoSurface::newSnapshot, this, &MainWindow::onImageCaptured);
+	connect(ui->actionRecognize, &QAction::triggered, mSurface, &CapturableVideoSurface::querySnapshot);
+	connect(ui->actionInfiniteRecognition, &QAction::triggered, this, &MainWindow::onInfiniteRecognitionToggled);
 
 	// Camera selection actions
 
@@ -51,20 +41,22 @@ MainWindow::MainWindow(QWidget *_parent) :
 	connect(ui->actionToggleLock, &QAction::toggled, this, &MainWindow::onLockToggled);
 
 	// Recognizer
+
 	mRecognizer = new MobileNetSSDRecognizer(nullptr);
 
 	connect(mSurface, &CapturableVideoSurface::newSnapshot, mRecognizer, &MobileNetSSDRecognizer::recognize);
-	//connect(ui->sliderConfidenceThreshold, &QSlider::valueChanged, mRecognizer, &MobileNetSSDRecognizer::setConfidenceThreshold);
+	connect(mRecognizer, &MobileNetSSDRecognizer::newRecognation, this, &MainWindow::onNewRecognation);
+	connect(mRecognizer, &MobileNetSSDRecognizer::recognationFailed, this, &MainWindow::onRecognationError);
 
 	// Tool bar
 
 	ui->mainToolBar->addAction(ui->actionToggleCamera);
 	ui->mainToolBar->addAction(ui->actionToggleLock);
-
+	ui->mainToolBar->addAction(ui->actionRecognize);
+	ui->mainToolBar->addAction(ui->actionInfiniteRecognition);
 	// For consistency
 
 	onCameraSelected(camerasGroup->checkedAction());
-	onConfidenceThresholdSetted(ui->sliderConfidenceThreshold->value());
 }
 
 MainWindow::~MainWindow()
@@ -91,6 +83,10 @@ void MainWindow::setCamera(const QCameraInfo &_cameraInfo)
 	mCamera->setViewfinder(mSurface);//(ui->viewFinder);//
 
 	ui->actionToggleLock->setEnabled(mCamera->supportedLocks() != QCamera::NoLock && mCamera->state() == QCamera::ActiveState);
+	ui->actionRecognize->setEnabled(!ui->actionInfiniteRecognition->isChecked() && mCamera->state() == QCamera::ActiveState);
+	ui->actionInfiniteRecognition->setEnabled(mCamera->state() == QCamera::ActiveState);
+
+	ui->groupBoxCamera->setTitle(tr("Camera [%1]").arg(_cameraInfo.description()));
 
 	// For consistency
 
@@ -110,11 +106,6 @@ void MainWindow::keyPressEvent(QKeyEvent *_event)
 	{
 		case Qt::Key_CameraFocus:
 			mCamera->searchAndLock();
-			_event->accept();
-			break;
-		case Qt::Key_Camera:
-			if (mCamera->captureMode() == QCamera::CaptureStillImage)
-//				mCapturer->capture();
 			_event->accept();
 			break;
 		default:
@@ -158,213 +149,16 @@ void MainWindow::onLockToggled(bool _on)
 		mCamera->unlock();
 }
 
-void MainWindow::onImageCaptured(QImage _img)
+void MainWindow::onInfiniteRecognitionToggled(bool _on)
 {
+	if (_on) {
 
-	QImage scaledImage = _img.scaled(ui->labelSnapshot->size(),
-		Qt::KeepAspectRatio, Qt::SmoothTransformation);
+		ui->actionRecognize->setEnabled(false);
+		mSurface->querySnapshot();
+	} else {
 
-	//ui->labelSnapshot->setPixmap(QPixmap::fromImage(scaledImage));
-
-	QVector<QString> classes = { "background", "aeroplane", "bicycle", "bird", "boat",
-		"bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
-		"dog", "horse", "motorbike", "person", "pottedplant", "sheep",
-		"sofa", "train", "tvmonitor"};
-
-	QFile fileProto(":/model/MobileNetSSD_deploy.prototxt.txt");
-	fileProto.open(QIODevice::ReadOnly);
-	QByteArray bufferProto = fileProto.readAll();
-
-	QFile fileModel(":/model/MobileNetSSD_deploy.caffemodel");
-	fileModel.open(QIODevice::ReadOnly);
-	QByteArray bufferModel = fileModel.readAll();
-
-	std::vector<uchar> bufferProto2, bufferModel2;
-
-	std::copy(bufferProto.begin(), bufferProto.end(), back_inserter(bufferProto2));
-	std::copy(bufferModel.begin(), bufferModel.end(), back_inserter(bufferModel2));
-
-	Net net = dnn::readNetFromCaffe(bufferProto2, bufferModel2);
-
-	Mat frame = QImageToCvMat(scaledImage, true);
-
-
-	//https://web-answers.ru/c/opencv-c-hwnd2mat-skrinshot-gt-blobfromimage.html
-	Mat blob = dnn::blobFromImage(frame, 0.007843, Size(300, 300), Scalar(127.5, 127.5, 127.5));
-
-
-	net.setInput(blob);
-	Mat detections = net.forward();
-	Mat detectionMat(detections.size[2], detections.size[3], CV_32F, detections.ptr<float>());
-	for (int i = 0; i < detectionMat.rows; i++) {
-
-		float confidence = detectionMat.at<float>(i, 2);
-		if (confidence > 0.8) { //confidenceThreshold
-			int idx = static_cast<int>(detectionMat.at<float>(i, 1));
-			int xLeftBottom = static_cast<int>(detectionMat.at<float>(i, 3) * frame.cols);
-			int yLeftBottom = static_cast<int>(detectionMat.at<float>(i, 4) * frame.rows);
-			int xRightTop = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
-			int yRightTop = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
-
-			Rect object((int)xLeftBottom, (int)yLeftBottom,
-			(int)(xRightTop - xLeftBottom),
-			(int)(yRightTop - yLeftBottom));
-
-			rectangle(frame, object, Scalar(0, 255, 0), 2);
-
-			std::string label = QString("%1: %2").arg(classes[idx]).arg(confidence * 100).toStdString();
-
-			putText(frame, label, Point(xLeftBottom + 3, yLeftBottom + 15),
-				FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,255,0));
-		}
+		ui->actionRecognize->setEnabled(mCamera->state() == QCamera::ActiveState);
 	}
-
-	//imshow("frame", frame);
-
-	ui->labelSnapshot->setPixmap(QPixmap::fromImage(cvMatToQImage(frame)));
-}
-
-// https://asmaloney.com/2013/11/code/converting-between-cvmat-and-qimage-or-qpixmap/
-cv::Mat QImageToCvMat(const QImage &inImage, bool inCloneImageData)
-{
-	  switch ( inImage.format() )
-	  {
-		 // 8-bit, 4 channel
-		 case QImage::Format_ARGB32:
-		 case QImage::Format_ARGB32_Premultiplied:
-		 {
-			cv::Mat  mat( inImage.height(), inImage.width(),
-						  CV_8UC4,
-						  const_cast<uchar*>(inImage.bits()),
-						  static_cast<size_t>(inImage.bytesPerLine())
-						  );
-
-			return (inCloneImageData ? mat.clone() : mat);
-		 }
-
-		 // 8-bit, 3 channel
-		 case QImage::Format_RGB32:
-		 {
-			if ( !inCloneImageData )
-			{
-			   qWarning() << "ASM::QImageToCvMat() - Conversion requires cloning so we don't modify the original QImage data";
-			}
-
-			cv::Mat  mat( inImage.height(), inImage.width(),
-						  CV_8UC4,
-						  const_cast<uchar*>(inImage.bits()),
-						  static_cast<size_t>(inImage.bytesPerLine())
-						  );
-
-			cv::Mat  matNoAlpha;
-
-			cv::cvtColor( mat, matNoAlpha, cv::COLOR_BGRA2BGR );   // drop the all-white alpha channel
-
-			return matNoAlpha;
-		 }
-
-		 // 8-bit, 3 channel
-		 case QImage::Format_RGB888:
-		 {
-			if ( !inCloneImageData )
-			{
-			   qWarning() << "ASM::QImageToCvMat() - Conversion requires cloning so we don't modify the original QImage data";
-			}
-
-			QImage   swapped = inImage.rgbSwapped();
-
-			return cv::Mat( swapped.height(), swapped.width(),
-							CV_8UC3,
-							const_cast<uchar*>(swapped.bits()),
-							static_cast<size_t>(swapped.bytesPerLine())
-							).clone();
-		 }
-
-		 // 8-bit, 1 channel
-		 case QImage::Format_Indexed8:
-		 {
-			cv::Mat  mat( inImage.height(), inImage.width(),
-						  CV_8UC1,
-						  const_cast<uchar*>(inImage.bits()),
-						  static_cast<size_t>(inImage.bytesPerLine())
-						  );
-
-			return (inCloneImageData ? mat.clone() : mat);
-		 }
-
-		 default:
-			qWarning() << "ASM::QImageToCvMat() - QImage format not handled in switch:" << inImage.format();
-			break;
-	  }
-
-	  return cv::Mat();
-}
-
-QImage cvMatToQImage( const cv::Mat &inMat )
-{
-	  switch ( inMat.type() )
-	  {
-		 // 8-bit, 4 channel
-		 case CV_8UC4:
-		 {
-			QImage image( inMat.data,
-						  inMat.cols, inMat.rows,
-						  static_cast<int>(inMat.step),
-						  QImage::Format_ARGB32 );
-
-			return image;
-		 }
-
-		 // 8-bit, 3 channel
-		 case CV_8UC3:
-		 {
-			QImage image( inMat.data,
-						  inMat.cols, inMat.rows,
-						  static_cast<int>(inMat.step),
-						  QImage::Format_RGB888 );
-
-			return image.rgbSwapped();
-		 }
-
-		 // 8-bit, 1 channel
-		 case CV_8UC1:
-		 {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
-			QImage image( inMat.data,
-						  inMat.cols, inMat.rows,
-						  static_cast<int>(inMat.step),
-						  QImage::Format_Grayscale8 );
-#else
-			static QVector<QRgb>  sColorTable;
-
-			// only create our color table the first time
-			if ( sColorTable.isEmpty() )
-			{
-			   sColorTable.resize( 256 );
-
-			   for ( int i = 0; i < 256; ++i )
-			   {
-				  sColorTable[i] = qRgb( i, i, i );
-			   }
-			}
-
-			QImage image( inMat.data,
-						  inMat.cols, inMat.rows,
-						  static_cast<int>(inMat.step),
-						  QImage::Format_Indexed8 );
-
-			image.setColorTable( sColorTable );
-#endif
-
-			return image;
-		 }
-
-		 default:
-			qWarning() << "ASM::cvMatToQImage() - cv::Mat image type not handled in switch:" << inMat.type();
-			break;
-	  }
-
-	  return QImage();
 }
 
 void MainWindow::onCameraStateChanged(QCamera::State _state)
@@ -381,6 +175,8 @@ void MainWindow::onCameraStateChanged(QCamera::State _state)
 			ui->actionToggleCamera->blockSignals(false);
 
 			ui->actionToggleLock->setEnabled(mCamera->supportedLocks() != QCamera::NoLock);
+			ui->actionRecognize->setEnabled(!ui->actionInfiniteRecognition->isChecked());
+			ui->actionInfiniteRecognition->setEnabled(true);
 
 			break;
 		default:
@@ -393,6 +189,8 @@ void MainWindow::onCameraStateChanged(QCamera::State _state)
 			ui->actionToggleCamera->blockSignals(false);
 
 			ui->actionToggleLock->setEnabled(false);
+			ui->actionRecognize->setEnabled(false);
+			ui->actionInfiniteRecognition->setEnabled(false);
 	}
 }
 
@@ -423,12 +221,7 @@ void MainWindow::onLockStatusChanged(QCamera::LockStatus _status, QCamera::LockC
 
 void MainWindow::onCameraErrorOccurred(QCamera::Error /*_err*/)
 {
-	QMessageBox::warning(this, tr("Camera error"), mCamera->errorString());
-}
-
-void MainWindow::onReadyForCaptureChanged(bool _ready)
-{
-	ui->buttonGetShapshot->setEnabled(_ready);
+	QMessageBox::warning(this, tr("Camera Error"), mCamera->errorString());
 }
 
 void MainWindow::onExposureCompensationSetted(int _index)
@@ -436,7 +229,33 @@ void MainWindow::onExposureCompensationSetted(int _index)
 	mCamera->exposure()->setExposureCompensation(_index * 0.5);
 }
 
-void MainWindow::onConfidenceThresholdSetted(int _value)
+void MainWindow::onNewRecognation(Recognation _rec)
 {
-//	mRecognizer->setConfidenceThreshold(static_cast<double>(_value) / 100.0);
+	QPixmap pixmap = QPixmap::fromImage(_rec.image);
+
+	QPainter painter(&pixmap);
+	painter.setPen(QPen(QColor(0,255,0), 3));
+	painter.setFont(QFont("Times", 10, QFont::Bold));
+
+	double thres = static_cast<double>(ui->sliderConfidenceThreshold->value()) / 100.0;
+	for (const RecognizedItem &item : _rec.items)
+		if (item.confidence >= thres && item.type == ITEMCLASSES::CHAIR) {
+			painter.drawRect(item.rect);
+			painter.drawText(item.rect.topLeft().x() + 5, item.rect.topLeft().y() + 15,
+				tr("Chair: %1 %").arg(item.confidence * 100.0, 0, 'f', 2));
+		}
+
+	ui->labelSnapshot->setMinimumWidth(pixmap.width());
+	ui->labelSnapshot->setMaximumWidth(pixmap.width());
+	ui->labelSnapshot->setMinimumHeight(pixmap.height());
+	ui->labelSnapshot->setMaximumHeight(pixmap.height());
+	ui->labelSnapshot->setPixmap(pixmap);
+
+	if (ui->actionInfiniteRecognition->isChecked())
+		mSurface->querySnapshot();		//TODO: fix it
+}
+
+void MainWindow::onRecognationError(QString _reason)
+{
+	QMessageBox::warning(this, tr("Recognation Error"), _reason);
 }
