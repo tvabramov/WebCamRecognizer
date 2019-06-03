@@ -5,6 +5,7 @@
 #include <QCamera>
 #include <QCameraImageCapture>
 #include <opencv2/imgproc.hpp>
+#include "capturablevideosurface.h"
 
 enum MatColorOrder {
 	MCO_BGR,
@@ -48,7 +49,7 @@ private:
     Ui::MainWindow *ui;
 	QCamera *mCamera;
 	QCameraImageCapture *mCapturer;
-
+	CapturableVideoSurface *mSurface;
 	void setCamera(const QCameraInfo &_cameraInfo);
 };
 

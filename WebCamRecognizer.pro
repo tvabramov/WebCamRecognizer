@@ -30,9 +30,11 @@ LIBS += -L$$(OPENCV_SDK_DIR)/x86/mingw/lib \
         -lopencv_imgproc410
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    capturablevideosurface.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    capturablevideosurface.h
 
 FORMS    += mainwindow.ui
 

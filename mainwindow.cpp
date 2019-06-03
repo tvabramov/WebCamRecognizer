@@ -23,6 +23,8 @@ MainWindow::MainWindow(QWidget *_parent) :
 {
     ui->setupUi(this);
 
+	mSurface = new CapturableVideoSurface(ui->labelSnapshot, this);
+
 	// General
 
 	connect(ui->buttonGetShapshot, &QPushButton::clicked, this, &MainWindow::onGetShapshotClicked);
@@ -78,7 +80,7 @@ void MainWindow::setCamera(const QCameraInfo &_cameraInfo)
 	connect(mCamera, static_cast<void(QCamera::*)(QCamera::LockStatus, QCamera::LockChangeReason)>(&QCamera::lockStatusChanged),
 		this, &MainWindow::onLockStatusChanged);
 
-	mCamera->setViewfinder(ui->viewFinder);
+	mCamera->setViewfinder(mSurface);//(ui->viewFinder);//
 
 	ui->actionToggleLock->setEnabled(mCamera->supportedLocks() != QCamera::NoLock && mCamera->state() == QCamera::ActiveState);
 
@@ -184,7 +186,7 @@ void MainWindow::onImageCaptured(int /*_requestId*/, const QImage& _img)
 		"dog", "horse", "motorbike", "person", "pottedplant", "sheep",
 		"sofa", "train", "tvmonitor"};
 
-	Net net = dnn::readNetFromCaffe(QString("C:/MobileNetSSD_deploy.prototxt.txt").toStdString(), QString("C:/MobileNetSSD_deploy.caffemodel").toStdString());
+	Net net = dnn::readNetFromCaffe(QString("D:/MobileNetSSD_deploy.prototxt.txt").toStdString(), QString("D:/MobileNetSSD_deploy.caffemodel").toStdString());
 
 	Mat frame = QImageToCvMat(scaledImage, true);
 
