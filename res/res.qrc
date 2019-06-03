@@ -3,4 +3,8 @@
         <file>camera.png</file>
         <file>focus.png</file>
     </qresource>
+    <qresource prefix="/model">
+        <file>MobileNetSSD_deploy.caffemodel</file>
+        <file>MobileNetSSD_deploy.prototxt.txt</file>
+    </qresource>
 </RCC>

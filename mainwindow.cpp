@@ -159,7 +159,20 @@ void MainWindow::onImageCaptured(QImage _img)
 		"dog", "horse", "motorbike", "person", "pottedplant", "sheep",
 		"sofa", "train", "tvmonitor"};
 
-	Net net = dnn::readNetFromCaffe(QString("D:/MobileNetSSD_deploy.prototxt.txt").toStdString(), QString("D:/MobileNetSSD_deploy.caffemodel").toStdString());
+	QFile fileProto(":/model/MobileNetSSD_deploy.prototxt.txt");
+	fileProto.open(QIODevice::ReadOnly);
+	QByteArray bufferProto = fileProto.readAll();
+
+	QFile fileModel(":/model/MobileNetSSD_deploy.caffemodel");
+	fileModel.open(QIODevice::ReadOnly);
+	QByteArray bufferModel = fileModel.readAll();
+
+	std::vector<uchar> bufferProto2, bufferModel2;
+
+	std::copy(bufferProto.begin(), bufferProto.end(), back_inserter(bufferProto2));
+	std::copy(bufferModel.begin(), bufferModel.end(), back_inserter(bufferModel2));
+
+	Net net = dnn::readNetFromCaffe(bufferProto2, bufferModel2);
 
 	Mat frame = QImageToCvMat(scaledImage, true);
 
