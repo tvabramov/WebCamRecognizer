@@ -201,7 +201,7 @@
    </property>
    <property name="icon">
     <iconset resource="res/res.qrc">
-     <normaloff>:/images/settings.png</normaloff>:/images/settings.png</iconset>
+     <normaloff>:/images/focus.png</normaloff>:/images/focus.png</iconset>
    </property>
    <property name="text">
     <string>Toggle Lock</string>
