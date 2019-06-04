@@ -5,7 +5,6 @@
 //https://evileg.com/ru/post/81/
 CapturableVideoSurface::CapturableVideoSurface(QObject *_parent, QGraphicsItem *_parentItem) :
 	QAbstractVideoSurface(_parent), QGraphicsItem(_parentItem),
-	mSnapshotQueried(0),
 	mFramePainted(false)
 {
 }
@@ -24,37 +23,7 @@ QList<QVideoFrame::PixelFormat> CapturableVideoSurface::supportedPixelFormats(
 		return QList<QVideoFrame::PixelFormat>();
 	}
 }
-/*
-bool CapturableVideoSurface::present(const QVideoFrame &_frame)
-{
-	QVideoFrame frametodraw(_frame);
 
-	if (!frametodraw.map(QAbstractVideoBuffer::ReadOnly)) {
-	   setError(ResourceError);
-	   return false;
-	}
-
-	QImage image(frametodraw.bits(), frametodraw.width(), frametodraw.height(),
-		frametodraw.bytesPerLine(),
-		QVideoFrame::imageFormatFromPixelFormat(frametodraw.pixelFormat()));
-
-	image = (surfaceFormat().scanLineDirection() == QVideoSurfaceFormat::BottomToTop) ? image.mirrored()
-																					  : image.copy();
-
-	frametodraw.unmap();
-
-	if (mSnapshotQueried > 0) {
-
-		mSnapshotQueried--;
-		emit newSnapshot(image);
-	}
-
-	mLabel->setPixmap(QPixmap::fromImage(image).scaled(mLabel->width(), mLabel->height(), Qt::KeepAspectRatio));	
-
-	mLabel->repaint();
-
-	return true;
-}*/
 QRectF CapturableVideoSurface::boundingRect() const
 {
 	return QRectF(QPointF(0,0), surfaceFormat().sizeHint());
@@ -64,30 +33,23 @@ void CapturableVideoSurface::paint(QPainter *_painter, const QStyleOptionGraphic
 {
 	if (mCurrentFrame.map(QAbstractVideoBuffer::ReadOnly)) {
 
-		const QTransform oldTransform = _painter->transform();
+		QImage image(mCurrentFrame.bits(), mCurrentFrame.width(), mCurrentFrame.height(),
+			QVideoFrame::imageFormatFromPixelFormat(mCurrentFrame.pixelFormat()));
 
-		if (surfaceFormat().scanLineDirection() == QVideoSurfaceFormat::BottomToTop) {
-		   _painter->scale(1, -1);
-		   _painter->translate(0, -boundingRect().height());
-		}
+		image = (surfaceFormat().scanLineDirection() == QVideoSurfaceFormat::BottomToTop) ? image.mirrored()
+																						  : image.copy();
 
-		_painter->drawImage(boundingRect(), QImage(
-				mCurrentFrame.bits(),
-				mCurrentFrame.width(),
-				mCurrentFrame.height(),
-				QVideoFrame::imageFormatFromPixelFormat(mCurrentFrame.pixelFormat())));
+		mCurrentFrame.unmap();
 
-		_painter->setTransform(oldTransform);
+		_painter->drawImage(boundingRect(), image);
 
 		mFramePainted = true;
 
-		mCurrentFrame.unmap();
-	}
-}
+		emit newSnapshot(image);
+	} else {
 
-void CapturableVideoSurface::querySnapshot()
-{
-	++mSnapshotQueried;
+		setError(ResourceError);
+	}
 }
 
 bool CapturableVideoSurface::present(const QVideoFrame &_frame)
@@ -110,8 +72,7 @@ bool CapturableVideoSurface::present(const QVideoFrame &_frame)
 bool CapturableVideoSurface::start(const QVideoSurfaceFormat &format)
 {
 	if (isFormatSupported(format)) {
-//		imageFormat = QVideoFrame::imageFormatFromPixelFormat(format.pixelFormat());
-		//imageSize = format.frameSize();
+
 		mFramePainted = true;
 
 		QAbstractVideoSurface::start(format);
@@ -126,7 +87,6 @@ bool CapturableVideoSurface::start(const QVideoSurfaceFormat &format)
 
 void CapturableVideoSurface::stop()
 {
-	//currentFrame = QVideoFrame();
 	mFramePainted = false;
 
 	QAbstractVideoSurface::stop();

@@ -16,7 +16,7 @@ MainWindow::MainWindow(QWidget *_parent) :
     ui->setupUi(this);
 
 	// General
-	mSurface = new CapturableVideoSurface;
+	mSurface = new CapturableVideoSurface(nullptr, nullptr);
 	QGraphicsScene *scene = new QGraphicsScene(this);
 	scene->addItem(mSurface);
 	//QGraphicsView *graphicsView = new QGraphicsView(scene);
@@ -27,7 +27,7 @@ MainWindow::MainWindow(QWidget *_parent) :
 
 
 	//mSurface = new CapturableVideoSurface(ui->labelViewFinder, this);
-	connect(ui->actionRecognize, &QAction::triggered, mSurface, &CapturableVideoSurface::querySnapshot);
+//	connect(ui->actionRecognize, &QAction::triggered, mSurface, &CapturableVideoSurface::querySnapshot);
 	connect(ui->actionInfiniteRecognition, &QAction::triggered, this, &MainWindow::onInfiniteRecognitionToggled);
 	connect(ui->actionAboutProgram, &QAction::triggered, this, &MainWindow::onAboutProgram);
 	connect(ui->actionAboutQt, &QAction::triggered, qApp, &QApplication::aboutQt);
@@ -165,7 +165,7 @@ void MainWindow::onInfiniteRecognitionToggled(bool _on)
 	if (_on) {
 
 		ui->actionRecognize->setEnabled(false);
-		mSurface->querySnapshot();
+//		mSurface->querySnapshot();
 	} else {
 
 		ui->actionRecognize->setEnabled(mCamera->state() == QCamera::ActiveState);
@@ -262,8 +262,8 @@ void MainWindow::onNewRecognation(Recognation _rec)
 	ui->labelSnapshot->setMaximumHeight(pixmap.height());
 	ui->labelSnapshot->setPixmap(pixmap);
 
-	if (ui->actionInfiniteRecognition->isChecked())
-		mSurface->querySnapshot();		//TODO: fix it
+//	if (ui->actionInfiniteRecognition->isChecked())
+//		mSurface->querySnapshot();		//TODO: fix it
 }
 
 void MainWindow::onRecognationError(QString _reason)

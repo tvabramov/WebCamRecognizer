@@ -24,11 +24,7 @@ public:
 signals:
 	void newSnapshot(QImage _img);
 
-public slots:
-	void querySnapshot();
-
 private:
-	int mSnapshotQueried;
 	QVideoFrame mCurrentFrame;
 	bool mFramePainted;
 };
