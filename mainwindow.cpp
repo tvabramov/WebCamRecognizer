@@ -1,6 +1,7 @@
 #include <QCameraInfo>
 #include <QMessageBox>
 #include <QtWidgets>
+#include <QThread>
 //#include <QGLWidget>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -10,8 +11,7 @@ Q_DECLARE_METATYPE(QCameraInfo)
 MainWindow::MainWindow(QWidget *_parent) :
     QMainWindow(_parent),
     ui(new Ui::MainWindow),
-	mCamera(nullptr),
-	mRecognizer(nullptr)
+	mCamera(nullptr), mSurface(nullptr), mRecognizer(nullptr), mRecognizerThread(nullptr)
 {
     ui->setupUi(this);
 
@@ -27,7 +27,7 @@ MainWindow::MainWindow(QWidget *_parent) :
 	//ui->graphicsViewFinder->setViewport(new QGLWidget);
 #endif
 
-//	connect(ui->actionRecognize, &QAction::triggered, mSurface, &CapturableVideoSurface::querySnapshot);
+	connect(ui->actionRecognize, &QAction::triggered, mSurface, &CapturableVideoSurface::querySnapshot);
 	connect(ui->actionInfiniteRecognition, &QAction::triggered, this, &MainWindow::onInfiniteRecognitionToggled);
 	connect(ui->actionAboutProgram, &QAction::triggered, this, &MainWindow::onAboutProgram);
 	connect(ui->actionAboutQt, &QAction::triggered, qApp, &QApplication::aboutQt);
@@ -53,9 +53,12 @@ MainWindow::MainWindow(QWidget *_parent) :
 
 	// Recognizer
 
-	mRecognizer = new MobileNetSSDRecognizer(nullptr);
+	mRecognizer = new MobileNetSSDRecognizer;
+	mRecognizerThread = new QThread(this);
+	mRecognizer->moveToThread(mRecognizerThread);
+	mRecognizerThread->start();
 
-	connect(mSurface, &CapturableVideoSurface::newSnapshot, mRecognizer, &MobileNetSSDRecognizer::recognize);
+	connect(mSurface, &CapturableVideoSurface::newSnapshot, mRecognizer, &MobileNetSSDRecognizer::recognize, Qt::QueuedConnection);		// Иначе есть риск не вернуться в цикл обработки событий
 	connect(mRecognizer, &MobileNetSSDRecognizer::newRecognation, this, &MainWindow::onNewRecognation);
 	connect(mRecognizer, &MobileNetSSDRecognizer::recognationFailed, this, &MainWindow::onRecognationError);
 
@@ -74,8 +77,20 @@ MainWindow::~MainWindow()
 {
 	delete ui;
 
-	delete mCamera;
-	delete mRecognizer;
+	if (mRecognizerThread) {
+
+		mRecognizerThread->quit();
+		if (!mRecognizerThread->wait(2000)) {
+			mRecognizerThread->terminate();
+			mRecognizerThread->wait(2000);
+
+			mRecognizerThread->deleteLater();
+			mRecognizer->deleteLater();
+		}
+	}
+
+	mCamera->deleteLater();
+	mRecognizer->deleteLater();
 }
 
 void MainWindow::setCamera(const QCameraInfo &_cameraInfo)
@@ -165,7 +180,7 @@ void MainWindow::onInfiniteRecognitionToggled(bool _on)
 	if (_on) {
 
 		ui->actionRecognize->setEnabled(false);
-//		mSurface->querySnapshot();
+		mSurface->querySnapshot();
 	} else {
 
 		ui->actionRecognize->setEnabled(mCamera->state() == QCamera::ActiveState);
@@ -262,8 +277,8 @@ void MainWindow::onNewRecognation(Recognation _rec)
 	ui->labelSnapshot->setMaximumHeight(pixmap.height());
 	ui->labelSnapshot->setPixmap(pixmap);
 
-//	if (ui->actionInfiniteRecognition->isChecked())
-//		mSurface->querySnapshot();		//TODO: fix it
+	if (ui->actionInfiniteRecognition->isChecked())
+		mSurface->querySnapshot();		//TODO: fix it
 }
 
 void MainWindow::onRecognationError(QString _reason)

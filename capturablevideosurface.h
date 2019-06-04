@@ -24,10 +24,13 @@ public:
 signals:
 	void newSnapshot(QImage _img);
 
+public slots:
+	void querySnapshot();
+
 private:
 	QRectF mBoundingRect;
 	QVideoFrame mCurrentFrame;
-	bool mFramePainted;
+	bool mFramePainted, mSnapshotQueried;
 };
 
 #endif // CAPTURABLEVIDEOSURFACE_H

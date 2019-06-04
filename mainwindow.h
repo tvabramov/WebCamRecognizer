@@ -40,6 +40,7 @@ private:
 	QCamera *mCamera;
 	CapturableVideoSurface *mSurface;
 	MobileNetSSDRecognizer *mRecognizer;
+	QThread *mRecognizerThread;
 
 	void setCamera(const QCameraInfo &_cameraInfo);
 };

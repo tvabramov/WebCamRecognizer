@@ -7,3 +7,5 @@
 7. Утечки
 8. Потоки
 9. Удаление объектов, parent
+10. OpenGL
+11. CapturableVideoSurface::paint, если не нужен image, то не надо делать копирование.

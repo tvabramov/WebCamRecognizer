@@ -5,7 +5,7 @@
 //https://evileg.com/ru/post/81/
 CapturableVideoSurface::CapturableVideoSurface(QRectF _boundingRect, QObject *_parent, QGraphicsItem *_parentItem) :
 	QAbstractVideoSurface(_parent), QGraphicsItem(_parentItem),
-	mBoundingRect(_boundingRect), mFramePainted(false)
+	mBoundingRect(_boundingRect), mFramePainted(false), mSnapshotQueried(false)
 {
 }
 
@@ -45,7 +45,11 @@ void CapturableVideoSurface::paint(QPainter *_painter, const QStyleOptionGraphic
 
 		mFramePainted = true;
 
-		//emit newSnapshot(image);
+		if (mSnapshotQueried) {
+
+			mSnapshotQueried = false;
+			emit newSnapshot(image);
+		}
 	} else {
 
 		setError(ResourceError);
@@ -90,4 +94,9 @@ void CapturableVideoSurface::stop()
 	mFramePainted = false;
 
 	QAbstractVideoSurface::stop();
+}
+
+void CapturableVideoSurface::querySnapshot()
+{
+	mSnapshotQueried = true;
 }
