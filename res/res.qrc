@@ -2,6 +2,10 @@
     <qresource prefix="/images">
         <file>camera.png</file>
         <file>focus.png</file>
+        <file>help.png</file>
+        <file>loop.png</file>
+        <file>scan.png</file>
+        <file>qt-logo.ico</file>
     </qresource>
     <qresource prefix="/model">
         <file>MobileNetSSD_deploy.caffemodel</file>

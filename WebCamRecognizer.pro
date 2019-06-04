@@ -17,7 +17,9 @@ TEMPLATE = app
 # deprecated API in order to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS
 
-CONFIG += resources_big
+CONFIG += resources_big c++14
+
+QMAKE_CXXFLAGS += -Wall
 
 # You can also make your code fail to compile if you use deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -44,4 +46,12 @@ FORMS    += mainwindow.ui
 
 RESOURCES += \
     res/res.qrc
+
+win32 {
+    RC_ICONS = logo.ico
+}
+
+TRANSLATIONS += WebCamRecognizer_ru.ts
+
+DEFINES += PROGRAMVERSION=\\\"1.0.0a\\\"
 

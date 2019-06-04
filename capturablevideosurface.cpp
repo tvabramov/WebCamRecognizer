@@ -42,8 +42,9 @@ bool CapturableVideoSurface::present(const QVideoFrame &_frame)
 	frametodraw.unmap();
 
 	if (mSnapshotQueried > 0) {
-		emit newSnapshot(image);
+
 		mSnapshotQueried--;
+		emit newSnapshot(image);
 	}
 
 	mLabel->setPixmap(QPixmap::fromImage(image).scaled(mLabel->width(), mLabel->height(), Qt::KeepAspectRatio));	

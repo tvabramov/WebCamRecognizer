@@ -29,6 +29,7 @@ private slots:
 	void onExposureCompensationSetted(int _index);
 	void onNewRecognation(Recognation _rec);
 	void onRecognationError(QString _reason);
+	void onAboutProgram();
 
 protected:
 	void keyPressEvent(QKeyEvent *_event);

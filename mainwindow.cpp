@@ -20,6 +20,8 @@ MainWindow::MainWindow(QWidget *_parent) :
 	mSurface = new CapturableVideoSurface(ui->labelViewFinder, this);
 	connect(ui->actionRecognize, &QAction::triggered, mSurface, &CapturableVideoSurface::querySnapshot);
 	connect(ui->actionInfiniteRecognition, &QAction::triggered, this, &MainWindow::onInfiniteRecognitionToggled);
+	connect(ui->actionAboutProgram, &QAction::triggered, this, &MainWindow::onAboutProgram);
+	connect(ui->actionAboutQt, &QAction::triggered, qApp, &QApplication::aboutQt);
 
 	// Camera selection actions
 
@@ -258,4 +260,20 @@ void MainWindow::onNewRecognation(Recognation _rec)
 void MainWindow::onRecognationError(QString _reason)
 {
 	QMessageBox::warning(this, tr("Recognation Error"), _reason);
+}
+
+void MainWindow::onAboutProgram()
+{
+	QString s = "<font color=red><b><big>" + tr("WebCamRecognizer") + "</big></b></font><br />";
+	s += "<font color=green> " + tr("Version: ") + QString(PROGRAMVERSION) + "</font>";
+
+	s += "<hr>" + tr("Application for chairs recognition and counting on webcam snapshots") + "<br /><br />";
+
+	QMessageBox *msgBox = new QMessageBox(this);
+	msgBox->setAttribute(Qt::WA_DeleteOnClose);
+	msgBox->setWindowTitle(tr("About Program"));
+	msgBox->setText(s);
+	msgBox->setWindowModality(Qt::NonModal);
+	msgBox->setIcon(QMessageBox::Information);
+	msgBox->show();
 }
