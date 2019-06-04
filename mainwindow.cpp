@@ -1,7 +1,7 @@
 #include <QCameraInfo>
 #include <QMessageBox>
 #include <QtWidgets>
-
+//#include <QGLWidget>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -16,8 +16,17 @@ MainWindow::MainWindow(QWidget *_parent) :
     ui->setupUi(this);
 
 	// General
+	mSurface = new CapturableVideoSurface;
+	QGraphicsScene *scene = new QGraphicsScene(this);
+	scene->addItem(mSurface);
+	//QGraphicsView *graphicsView = new QGraphicsView(scene);
+	ui->graphicsViewFinder->setScene(scene);
+#if !defined(QT_NO_OPENGL)
+	//ui->graphicsViewFinder->setViewport(new QGLWidget);
+#endif
 
-	mSurface = new CapturableVideoSurface(ui->labelViewFinder, this);
+
+	//mSurface = new CapturableVideoSurface(ui->labelViewFinder, this);
 	connect(ui->actionRecognize, &QAction::triggered, mSurface, &CapturableVideoSurface::querySnapshot);
 	connect(ui->actionInfiniteRecognition, &QAction::triggered, this, &MainWindow::onInfiniteRecognitionToggled);
 	connect(ui->actionAboutProgram, &QAction::triggered, this, &MainWindow::onAboutProgram);

@@ -22,9 +22,9 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <widget class="QLabel" name="labelViewFinder">
+        <widget class="QGraphicsView" name="graphicsViewFinder">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -35,14 +35,11 @@
            <height>240</height>
           </size>
          </property>
-         <property name="maximumSize">
+         <property name="sizeIncrement">
           <size>
            <width>320</width>
            <height>240</height>
           </size>
-         </property>
-         <property name="text">
-          <string/>
          </property>
         </widget>
        </item>
