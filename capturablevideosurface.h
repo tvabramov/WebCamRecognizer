@@ -10,7 +10,7 @@ class CapturableVideoSurface : public QAbstractVideoSurface, public QGraphicsIte
 	Q_INTERFACES(QGraphicsItem)
 
 public:
-	explicit CapturableVideoSurface(QObject *_parent = nullptr, QGraphicsItem *_parentItem = nullptr);
+	explicit CapturableVideoSurface(QRectF _boundingRect, QObject *_parent = nullptr, QGraphicsItem *_parentItem = nullptr);
 
 	QList<QVideoFrame::PixelFormat> supportedPixelFormats(
 			QAbstractVideoBuffer::HandleType _handleType = QAbstractVideoBuffer::NoHandle) const;
@@ -25,6 +25,7 @@ signals:
 	void newSnapshot(QImage _img);
 
 private:
+	QRectF mBoundingRect;
 	QVideoFrame mCurrentFrame;
 	bool mFramePainted;
 };

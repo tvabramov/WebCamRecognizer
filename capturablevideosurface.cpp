@@ -3,9 +3,9 @@
 #include <QPainter>
 
 //https://evileg.com/ru/post/81/
-CapturableVideoSurface::CapturableVideoSurface(QObject *_parent, QGraphicsItem *_parentItem) :
+CapturableVideoSurface::CapturableVideoSurface(QRectF _boundingRect, QObject *_parent, QGraphicsItem *_parentItem) :
 	QAbstractVideoSurface(_parent), QGraphicsItem(_parentItem),
-	mFramePainted(false)
+	mBoundingRect(_boundingRect), mFramePainted(false)
 {
 }
 
@@ -26,7 +26,7 @@ QList<QVideoFrame::PixelFormat> CapturableVideoSurface::supportedPixelFormats(
 
 QRectF CapturableVideoSurface::boundingRect() const
 {
-	return QRectF(QPointF(0,0), surfaceFormat().sizeHint());
+	return mBoundingRect.isValid() ? mBoundingRect : QRectF(QPointF(0,0), surfaceFormat().sizeHint());
 }
 
 void CapturableVideoSurface::paint(QPainter *_painter, const QStyleOptionGraphicsItem */*_option*/, QWidget */*_widget*/)
@@ -45,7 +45,7 @@ void CapturableVideoSurface::paint(QPainter *_painter, const QStyleOptionGraphic
 
 		mFramePainted = true;
 
-		emit newSnapshot(image);
+		//emit newSnapshot(image);
 	} else {
 
 		setError(ResourceError);
