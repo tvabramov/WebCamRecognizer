@@ -58,7 +58,7 @@ MainWindow::MainWindow(QWidget *_parent) :
 	mRecognizer->moveToThread(mRecognizerThread);
 	mRecognizerThread->start();
 
-	connect(mSurface, &CapturableVideoSurface::newSnapshot, mRecognizer, &MobileNetSSDRecognizer::recognize, Qt::QueuedConnection);		// Иначе есть риск не вернуться в цикл обработки событий
+	connect(mSurface, &CapturableVideoSurface::newSnapshot, mRecognizer, &MobileNetSSDRecognizer::recognize);
 	connect(mRecognizer, &MobileNetSSDRecognizer::newRecognation, this, &MainWindow::onNewRecognation);
 	connect(mRecognizer, &MobileNetSSDRecognizer::recognationFailed, this, &MainWindow::onRecognationError);
 
@@ -278,7 +278,7 @@ void MainWindow::onNewRecognation(Recognation _rec)
 	ui->labelSnapshot->setPixmap(pixmap);
 
 	if (ui->actionInfiniteRecognition->isChecked())
-		mSurface->querySnapshot();		//TODO: fix it
+		QTimer::singleShot(0, mSurface, SLOT(querySnapshot()));
 }
 
 void MainWindow::onRecognationError(QString _reason)
