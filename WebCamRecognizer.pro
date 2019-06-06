@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui multimedia multimediawidgets
+QT       += core gui multimedia multimediawidgets opengl
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -36,11 +36,13 @@ LIBS += -L$$(OPENCV_SDK_DIR)/x86/mingw/lib \
 SOURCES += main.cpp\
         mainwindow.cpp \
     capturablevideosurface.cpp \
-    mobilenetssdrecognizer.cpp
+    mobilenetssdrecognizer.cpp \
+    recognitionitem.cpp
 
 HEADERS  += mainwindow.h \
     capturablevideosurface.h \
-    mobilenetssdrecognizer.h
+    mobilenetssdrecognizer.h \
+    recognitionitem.h
 
 FORMS    += mainwindow.ui
 

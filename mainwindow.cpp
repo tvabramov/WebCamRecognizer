@@ -2,7 +2,7 @@
 #include <QMessageBox>
 #include <QtWidgets>
 #include <QThread>
-//#include <QGLWidget>
+#include <QGLWidget>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -11,7 +11,7 @@ Q_DECLARE_METATYPE(QCameraInfo)
 MainWindow::MainWindow(QWidget *_parent) :
     QMainWindow(_parent),
     ui(new Ui::MainWindow),
-	mCamera(nullptr), mSurface(nullptr), mRecognizer(nullptr), mRecognizerThread(nullptr)
+	mCamera(nullptr), mSurface(nullptr), mRecognizer(nullptr), mRecognizerThread(nullptr), mRecItem(nullptr)
 {
     ui->setupUi(this);
 
@@ -23,8 +23,17 @@ MainWindow::MainWindow(QWidget *_parent) :
 	scene->addItem(mSurface);
 	ui->graphicsViewFinder->setScene(scene);
 
+	mRecItem = new RecognitionItem(QRectF(QPointF(0, 0), QPointF(ui->graphicsViewFinder->width(), ui->graphicsViewFinder->height())),
+		ui->sliderConfidenceThreshold->value(), nullptr, nullptr);
+	QGraphicsScene *scene2 = new QGraphicsScene(this);
+	scene2->addItem(mRecItem);
+	ui->graphicsViewRecognition->setScene(scene2);
+
+	connect(ui->sliderConfidenceThreshold, &QSlider::valueChanged, mRecItem, &RecognitionItem::setConfThresholdProc);
+
 #if !defined(QT_NO_OPENGL)
-	//ui->graphicsViewFinder->setViewport(new QGLWidget);
+	ui->graphicsViewFinder->setViewport(new QGLWidget);
+	ui->graphicsViewRecognition->setViewport(new QGLWidget);
 #endif
 
 	connect(ui->actionRecognize, &QAction::triggered, mSurface, &CapturableVideoSurface::querySnapshot);
@@ -59,8 +68,9 @@ MainWindow::MainWindow(QWidget *_parent) :
 	mRecognizerThread->start();
 
 	connect(mSurface, &CapturableVideoSurface::newSnapshot, mRecognizer, &MobileNetSSDRecognizer::recognize);
-	connect(mRecognizer, &MobileNetSSDRecognizer::newRecognation, this, &MainWindow::onNewRecognation);
-	connect(mRecognizer, &MobileNetSSDRecognizer::recognationFailed, this, &MainWindow::onRecognationError);
+	connect(mRecognizer, &MobileNetSSDRecognizer::newRecognition, this, &MainWindow::onNewRecognition);
+	connect(mRecognizer, &MobileNetSSDRecognizer::newRecognition, mRecItem, &RecognitionItem::setRecognition);
+	connect(mRecognizer, &MobileNetSSDRecognizer::recognitionFailed, this, &MainWindow::onRecognitionError);
 
 	// Tool bar
 
@@ -68,6 +78,7 @@ MainWindow::MainWindow(QWidget *_parent) :
 	ui->mainToolBar->addAction(ui->actionToggleLock);
 	ui->mainToolBar->addAction(ui->actionRecognize);
 	ui->mainToolBar->addAction(ui->actionInfiniteRecognition);
+
 	// For consistency
 
 	onCameraSelected(camerasGroup->checkedAction());
@@ -77,20 +88,12 @@ MainWindow::~MainWindow()
 {
 	delete ui;
 
-	if (mRecognizerThread) {
+	mRecognizerThread->quit();
+	mRecognizerThread->wait();
 
-		mRecognizerThread->quit();
-		if (!mRecognizerThread->wait(2000)) {
-			mRecognizerThread->terminate();
-			mRecognizerThread->wait(2000);
-
-			mRecognizerThread->deleteLater();
-			mRecognizer->deleteLater();
-		}
-	}
-
-	mCamera->deleteLater();
 	mRecognizer->deleteLater();
+	mRecognizerThread->deleteLater();
+	mCamera->deleteLater();	
 }
 
 void MainWindow::setCamera(const QCameraInfo &_cameraInfo)
@@ -255,9 +258,9 @@ void MainWindow::onExposureCompensationSetted(int _index)
 	mCamera->exposure()->setExposureCompensation(_index * 0.5);
 }
 
-void MainWindow::onNewRecognation(Recognation _rec)
+void MainWindow::onNewRecognition(Recognition /*_rec*/)
 {
-	QPixmap pixmap = QPixmap::fromImage(_rec.image);
+	/*QPixmap pixmap = QPixmap::fromImage(_rec.image);
 
 	QPainter painter(&pixmap);
 	painter.setPen(QPen(QColor(0,255,0), 3));
@@ -275,15 +278,15 @@ void MainWindow::onNewRecognation(Recognation _rec)
 	ui->labelSnapshot->setMaximumWidth(pixmap.width());
 	ui->labelSnapshot->setMinimumHeight(pixmap.height());
 	ui->labelSnapshot->setMaximumHeight(pixmap.height());
-	ui->labelSnapshot->setPixmap(pixmap);
+	ui->labelSnapshot->setPixmap(pixmap);*/
 
 	if (ui->actionInfiniteRecognition->isChecked())
 		QTimer::singleShot(0, mSurface, SLOT(querySnapshot()));
 }
 
-void MainWindow::onRecognationError(QString _reason)
+void MainWindow::onRecognitionError(QString _reason)
 {
-	QMessageBox::warning(this, tr("Recognation Error"), _reason);
+	QMessageBox::warning(this, tr("Recognition Error"), _reason);
 }
 
 void MainWindow::onAboutProgram()

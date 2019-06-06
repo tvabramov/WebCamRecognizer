@@ -5,6 +5,7 @@
 #include <QCamera>
 #include "capturablevideosurface.h"
 #include "mobilenetssdrecognizer.h"
+#include "recognitionitem.h"
 
 namespace Ui {
 class MainWindow;
@@ -27,8 +28,8 @@ private slots:
 	void onCameraStateChanged(QCamera::State _state);
 	void onLockStatusChanged(QCamera::LockStatus _status, QCamera::LockChangeReason _reason);
 	void onExposureCompensationSetted(int _index);
-	void onNewRecognation(Recognation _rec);
-	void onRecognationError(QString _reason);
+	void onNewRecognition(Recognition _rec);
+	void onRecognitionError(QString _reason);
 	void onAboutProgram();
 
 protected:
@@ -41,6 +42,7 @@ private:
 	CapturableVideoSurface *mSurface;
 	MobileNetSSDRecognizer *mRecognizer;
 	QThread *mRecognizerThread;
+	RecognitionItem *mRecItem;
 
 	void setCamera(const QCameraInfo &_cameraInfo);
 };

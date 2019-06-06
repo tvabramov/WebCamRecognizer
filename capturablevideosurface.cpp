@@ -2,7 +2,6 @@
 #include <QVideoSurfaceFormat>
 #include <QPainter>
 
-//https://evileg.com/ru/post/81/
 CapturableVideoSurface::CapturableVideoSurface(QRectF _boundingRect, QObject *_parent, QGraphicsItem *_parentItem) :
 	QAbstractVideoSurface(_parent), QGraphicsItem(_parentItem),
 	mBoundingRect(_boundingRect), mFramePainted(false), mSnapshotQueried(false)
@@ -31,6 +30,7 @@ QRectF CapturableVideoSurface::boundingRect() const
 
 void CapturableVideoSurface::paint(QPainter *_painter, const QStyleOptionGraphicsItem */*_option*/, QWidget */*_widget*/)
 {
+	// TODO: Если нет необходимости отправлять, то не надо делать копию
 	if (mCurrentFrame.map(QAbstractVideoBuffer::ReadOnly)) {
 
 		QImage image(mCurrentFrame.bits(), mCurrentFrame.width(), mCurrentFrame.height(),

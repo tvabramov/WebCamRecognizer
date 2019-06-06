@@ -37,8 +37,8 @@
          </property>
          <property name="maximumSize">
           <size>
-           <width>320</width>
-           <height>240</height>
+           <width>640</width>
+           <height>480</height>
           </size>
          </property>
          <property name="sizeIncrement">
@@ -104,15 +104,24 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
-        <widget class="QLabel" name="labelSnapshot">
+        <widget class="QGraphicsView" name="graphicsViewRecognition">
          <property name="minimumSize">
           <size>
            <width>320</width>
            <height>240</height>
           </size>
          </property>
-         <property name="text">
-          <string/>
+         <property name="maximumSize">
+          <size>
+           <width>640</width>
+           <height>480</height>
+          </size>
+         </property>
+         <property name="verticalScrollBarPolicy">
+          <enum>Qt::ScrollBarAlwaysOff</enum>
+         </property>
+         <property name="horizontalScrollBarPolicy">
+          <enum>Qt::ScrollBarAlwaysOff</enum>
          </property>
         </widget>
        </item>

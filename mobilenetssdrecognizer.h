@@ -27,15 +27,15 @@ struct RecognizedItem {
 		type(_type), confidence(_confidence), rect(_rect) {}
 };
 
-struct Recognation {
+struct Recognition {
 
 	QImage image;
 	QVector<RecognizedItem> items;
 
-	Recognation() {}
-	Recognation(QImage _image) :
+	Recognition() {}
+	Recognition(QImage _image) :
 		image(_image.copy()) {}
-	Recognation(QImage _image, QVector<RecognizedItem> _items) :
+	Recognition(QImage _image, QVector<RecognizedItem> _items) :
 		image(_image.copy()), items(_items) {}
 };
 
@@ -47,8 +47,8 @@ public:
 	explicit MobileNetSSDRecognizer(QObject *_parent = nullptr);
 
 signals:
-	void newRecognation(Recognation);
-	void recognationFailed(QString reason);
+	void newRecognition(Recognition);
+	void recognitionFailed(QString reason);
 
 public slots:
 	void recognize(QImage _image);

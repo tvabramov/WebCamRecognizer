@@ -11,7 +11,7 @@ using namespace std;
 MobileNetSSDRecognizer::MobileNetSSDRecognizer(QObject *_parent) :
 	QObject(_parent)
 {
-	qRegisterMetaType<Recognation>("Recognation");
+	qRegisterMetaType<Recognition>("Recognition");
 
 	QFile fileProto(":/model/MobileNetSSD_deploy.prototxt.txt");
 	fileProto.open(QIODevice::ReadOnly);
@@ -32,7 +32,7 @@ MobileNetSSDRecognizer::MobileNetSSDRecognizer(QObject *_parent) :
 void MobileNetSSDRecognizer::recognize(QImage _image)
 {
 	if (_image.format() != QImage::Format_RGB32)
-		emit recognationFailed(tr("Incorrect image format"));
+		emit recognitionFailed(tr("Incorrect image format"));
 
 	// Ограничиваем размер
 	_image = _image.scaled(QSize(640, 480),
@@ -49,7 +49,7 @@ void MobileNetSSDRecognizer::recognize(QImage _image)
 	mNet.setInput(blob);
 	Mat detections = mNet.forward();
 	Mat detectionMat(detections.size[2], detections.size[3], CV_32F, detections.ptr<float>());
-	Recognation rec;
+	Recognition rec;
 	for (int i = 0; i < detectionMat.rows; i++) {
 
 		float confidence = detectionMat.at<float>(i, 2);
@@ -69,6 +69,6 @@ void MobileNetSSDRecognizer::recognize(QImage _image)
 
 	rec.image = _image;
 
-	emit newRecognation(rec);
+	emit newRecognition(rec);
 }
 
