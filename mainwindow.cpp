@@ -170,7 +170,10 @@ void MainWindow::keyReleaseEvent(QKeyEvent *_event)
 
 void MainWindow::onCameraSelected(QAction *_action)
 {
-	setCamera(qvariant_cast<QCameraInfo>(_action->data()));
+	if (_action)
+		setCamera(qvariant_cast<QCameraInfo>(_action->data()));
+	else
+		setCamera(QCameraInfo::defaultCamera());
 }
 
 void MainWindow::onCameraToggled(bool _on)
