@@ -14,8 +14,17 @@ QRectF RecognitionItem::boundingRect() const
 
 void RecognitionItem::paint(QPainter *_painter, const QStyleOptionGraphicsItem */*_option*/, QWidget */*_widget*/)
 {
-	if (mRec.image.isNull())
+	if (mRec.isEmpty())
 		return;
+
+	if (!mRec.isValid()) {
+
+		_painter->setPen(QPen(QColor(255,0,0), 3));
+		_painter->setFont(QFont("Times", 10, QFont::Bold));
+		_painter->drawText(0, boundingRect().height() / 2, tr("Error: %1").arg(mRec.error));
+
+		return;
+	}
 
 	qreal sx = mBoundingRect.width() / static_cast<qreal>(mRec.image.width());
 	qreal sy = mBoundingRect.height() / static_cast<qreal>(mRec.image.height());

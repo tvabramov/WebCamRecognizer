@@ -31,12 +31,17 @@ struct Recognition {
 
 	QImage image;
 	QVector<RecognizedItem> items;
+	QString error;
 
 	Recognition() {}
 	Recognition(QImage _image) :
 		image(_image.copy()) {}
 	Recognition(QImage _image, QVector<RecognizedItem> _items) :
 		image(_image.copy()), items(_items) {}
+	Recognition(QString _error) : error(_error) {}
+
+	bool isValid() { return !image.isNull() && error.isEmpty(); }
+	bool isEmpty() { return image.isNull() && error.isEmpty(); }
 };
 
 class MobileNetSSDRecognizer : public QObject
@@ -48,7 +53,6 @@ public:
 
 signals:
 	void newRecognition(Recognition);
-	void recognitionFailed(QString reason);
 
 public slots:
 	void recognize(QImage _image);

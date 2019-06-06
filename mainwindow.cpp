@@ -11,37 +11,46 @@ Q_DECLARE_METATYPE(QCameraInfo)
 MainWindow::MainWindow(QWidget *_parent) :
     QMainWindow(_parent),
     ui(new Ui::MainWindow),
-	mCamera(nullptr), mSurface(nullptr), mRecognizer(nullptr), mRecognizerThread(nullptr), mRecItem(nullptr)
+	mCamera(nullptr)
 {
     ui->setupUi(this);
 
-	// General
+	// Viewfinder Surface and GraphicView
 
-	mSurface = new CapturableVideoSurface(QRectF(QPointF(0, 0), QPointF(ui->graphicsViewFinder->width(),
+	{
+		mSurface = new CapturableVideoSurface(QRectF(QPointF(0, 0), QPointF(ui->graphicsViewFinder->width(),
 		ui->graphicsViewFinder->height())), nullptr, nullptr);
-	QGraphicsScene *scene = new QGraphicsScene(this);
-	scene->addItem(mSurface);
-	ui->graphicsViewFinder->setScene(scene);
 
-	mRecItem = new RecognitionItem(QRectF(QPointF(0, 0), QPointF(ui->graphicsViewFinder->width(), ui->graphicsViewFinder->height())),
-		ui->sliderConfidenceThreshold->value(), nullptr, nullptr);
-	QGraphicsScene *scene2 = new QGraphicsScene(this);
-	scene2->addItem(mRecItem);
-	ui->graphicsViewRecognition->setScene(scene2);
+		QGraphicsScene *scene = new QGraphicsScene(this);
+		scene->addItem(mSurface);
+		ui->graphicsViewFinder->setScene(scene);
 
-	connect(ui->sliderConfidenceThreshold, &QSlider::valueChanged, mRecItem, &RecognitionItem::setConfThresholdProc);
+		#if !defined(QT_NO_OPENGL)
+		ui->graphicsViewFinder->setViewport(new QGLWidget);
+		#endif
+	}
 
-#if !defined(QT_NO_OPENGL)
-	ui->graphicsViewFinder->setViewport(new QGLWidget);
-	ui->graphicsViewRecognition->setViewport(new QGLWidget);
-#endif
+	// Recognition GraphicItem and GraphicView
+
+	{
+		mRecItem = new RecognitionItem(QRectF(QPointF(0, 0), QPointF(ui->graphicsViewRecognition->width(), ui->graphicsViewRecognition->height())),
+			ui->sliderConfidenceThreshold->value(), nullptr, nullptr);
+		QGraphicsScene *scene = new QGraphicsScene(this);
+		scene->addItem(mRecItem);
+		ui->graphicsViewRecognition->setScene(scene);
+
+		#if !defined(QT_NO_OPENGL)
+		ui->graphicsViewRecognition->setViewport(new QGLWidget);
+		#endif
+	}
 
 	connect(ui->actionRecognize, &QAction::triggered, mSurface, &CapturableVideoSurface::querySnapshot);
+	connect(ui->sliderConfidenceThreshold, &QSlider::valueChanged, mRecItem, &RecognitionItem::setConfThresholdProc);
 	connect(ui->actionInfiniteRecognition, &QAction::triggered, this, &MainWindow::onInfiniteRecognitionToggled);
 	connect(ui->actionAboutProgram, &QAction::triggered, this, &MainWindow::onAboutProgram);
 	connect(ui->actionAboutQt, &QAction::triggered, qApp, &QApplication::aboutQt);
 
-	// Camera selection actions
+	// ----------- Camera selection actions -----------
 
 	QActionGroup *camerasGroup = new QActionGroup(this);
 	camerasGroup->setExclusive(true);
@@ -62,7 +71,7 @@ MainWindow::MainWindow(QWidget *_parent) :
 
 	// Recognizer
 
-	mRecognizer = new MobileNetSSDRecognizer;
+	mRecognizer = new MobileNetSSDRecognizer(nullptr);
 	mRecognizerThread = new QThread(this);
 	mRecognizer->moveToThread(mRecognizerThread);
 	mRecognizerThread->start();
@@ -70,7 +79,6 @@ MainWindow::MainWindow(QWidget *_parent) :
 	connect(mSurface, &CapturableVideoSurface::newSnapshot, mRecognizer, &MobileNetSSDRecognizer::recognize);
 	connect(mRecognizer, &MobileNetSSDRecognizer::newRecognition, this, &MainWindow::onNewRecognition);
 	connect(mRecognizer, &MobileNetSSDRecognizer::newRecognition, mRecItem, &RecognitionItem::setRecognition);
-	connect(mRecognizer, &MobileNetSSDRecognizer::recognitionFailed, this, &MainWindow::onRecognitionError);
 
 	// Tool bar
 
@@ -93,14 +101,17 @@ MainWindow::~MainWindow()
 
 	mRecognizer->deleteLater();
 	mRecognizerThread->deleteLater();
-	mCamera->deleteLater();	
 }
 
 void MainWindow::setCamera(const QCameraInfo &_cameraInfo)
 {
-	delete mCamera;
+	if (mCamera) {
 
-	mCamera = new QCamera(_cameraInfo);
+		mCamera->stop();
+		mCamera->deleteLater();
+	}
+
+	mCamera = new QCamera(_cameraInfo, this);
 
 	connect(mCamera, &QCamera::stateChanged, this, &MainWindow::onCameraStateChanged);
 	connect(mCamera, static_cast<void(QCamera::*)(QCamera::Error)>(&QCamera::error),
@@ -109,13 +120,13 @@ void MainWindow::setCamera(const QCameraInfo &_cameraInfo)
 	connect(mCamera, static_cast<void(QCamera::*)(QCamera::LockStatus, QCamera::LockChangeReason)>(&QCamera::lockStatusChanged),
 		this, &MainWindow::onLockStatusChanged);
 
-	mCamera->setViewfinder(mSurface);//(ui->viewFinder);//
+	mCamera->setViewfinder(mSurface);
 
 	ui->actionToggleLock->setEnabled(mCamera->supportedLocks() != QCamera::NoLock && mCamera->state() == QCamera::ActiveState);
 	ui->actionRecognize->setEnabled(!ui->actionInfiniteRecognition->isChecked() && mCamera->state() == QCamera::ActiveState);
 	ui->actionInfiniteRecognition->setEnabled(mCamera->state() == QCamera::ActiveState);
 
-	ui->groupBoxCamera->setTitle(tr("Camera [%1]").arg(_cameraInfo.description()));
+	ui->groupBoxCamera->setTitle(tr("Viewfinder [%1]").arg(_cameraInfo.description()));
 
 	// For consistency
 
@@ -260,47 +271,17 @@ void MainWindow::onExposureCompensationSetted(int _index)
 
 void MainWindow::onNewRecognition(Recognition /*_rec*/)
 {
-	/*QPixmap pixmap = QPixmap::fromImage(_rec.image);
-
-	QPainter painter(&pixmap);
-	painter.setPen(QPen(QColor(0,255,0), 3));
-	painter.setFont(QFont("Times", 10, QFont::Bold));
-
-	double thres = static_cast<double>(ui->sliderConfidenceThreshold->value()) / 100.0;
-	for (const RecognizedItem &item : _rec.items)
-		if (item.confidence >= thres && item.type == ITEMCLASSES::CHAIR) {
-			painter.drawRect(item.rect);
-			painter.drawText(item.rect.topLeft().x() + 5, item.rect.topLeft().y() + 15,
-				tr("Chair: %1 %").arg(item.confidence * 100.0, 0, 'f', 2));
-		}
-
-	ui->labelSnapshot->setMinimumWidth(pixmap.width());
-	ui->labelSnapshot->setMaximumWidth(pixmap.width());
-	ui->labelSnapshot->setMinimumHeight(pixmap.height());
-	ui->labelSnapshot->setMaximumHeight(pixmap.height());
-	ui->labelSnapshot->setPixmap(pixmap);*/
-
 	if (ui->actionInfiniteRecognition->isChecked())
 		QTimer::singleShot(0, mSurface, SLOT(querySnapshot()));
 }
 
-void MainWindow::onRecognitionError(QString _reason)
-{
-	QMessageBox::warning(this, tr("Recognition Error"), _reason);
-}
-
 void MainWindow::onAboutProgram()
 {
-	QString s = "<font color=red><b><big>" + tr("WebCamRecognizer") + "</big></b></font><br />";
-	s += "<font color=green> " + tr("Version: ") + QString(PROGRAMVERSION) + "</font>";
-
+	QString s = "<font color=red><b><big>" + tr("WebCamRecognizer") + "</big></b></font><br/>";
+	s += "<font color=green><big>" + tr("Prorgram version: ") + PROGRAMVERSION + "</big></font><br/>";
+	s += "<font color=black>" + tr("OpenCV version: ") + CV_VERSION + "</font><br/>";
+	s += "<font color=black>" + tr("Qt version: ") + QT_VERSION_STR + "</font><br/>";
 	s += "<hr>" + tr("Application for chairs recognition and counting on webcam snapshots") + "<br /><br />";
 
-	QMessageBox *msgBox = new QMessageBox(this);
-	msgBox->setAttribute(Qt::WA_DeleteOnClose);
-	msgBox->setWindowTitle(tr("About Program"));
-	msgBox->setText(s);
-	msgBox->setWindowModality(Qt::NonModal);
-	msgBox->setIcon(QMessageBox::Information);
-	msgBox->show();
+	QMessageBox::about(this, "About Program", s);
 }

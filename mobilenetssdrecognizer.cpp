@@ -30,18 +30,24 @@ MobileNetSSDRecognizer::MobileNetSSDRecognizer(QObject *_parent) :
 }
 
 void MobileNetSSDRecognizer::recognize(QImage _image)
-{
-	if (_image.format() != QImage::Format_RGB32)
-		emit recognitionFailed(tr("Incorrect image format"));
+{	
+	if (_image.isNull()) {
+		emit newRecognition(Recognition(tr("Null image")));
+		return;
+	}
 
-	// Ограничиваем размер
-	_image = _image.scaled(QSize(640, 480),
-		Qt::KeepAspectRatio, Qt::SmoothTransformation);
+	if (_image.format() != QImage::Format_RGB32)
+		_image = _image.convertToFormat(QImage::Format_RGB32);
+
+	if (_image.isNull() || _image.format() != QImage::Format_RGB32) {
+
+		emit newRecognition(Recognition(tr("Unsupported image format")));
+		return;
+	}
 
 	Mat frame;
 	cvtColor(Mat(_image.height(), _image.width(), CV_8UC4, const_cast<uchar*>(_image.bits()),
 		static_cast<size_t>(_image.bytesPerLine())), frame, cv::COLOR_BGRA2BGR);
-
 
 	//https://web-answers.ru/c/opencv-c-hwnd2mat-skrinshot-gt-blobfromimage.html
 	Mat blob = dnn::blobFromImage(frame, 0.007843, Size(300, 300), Scalar(127.5, 127.5, 127.5));

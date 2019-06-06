@@ -7,11 +7,11 @@
     <x>0</x>
     <y>0</y>
     <width>704</width>
-    <height>608</height>
+    <height>402</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>WebCamRecognizer</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
