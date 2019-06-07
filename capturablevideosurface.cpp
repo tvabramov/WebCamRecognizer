@@ -28,27 +28,53 @@ QRectF CapturableVideoSurface::boundingRect() const
 	return mBoundingRect.isValid() ? mBoundingRect : QRectF(QPointF(0,0), surfaceFormat().sizeHint());
 }
 
+/**
+ * @brief   CapturableVideoSurface::paint
+ * @details Выполняем функцию прорисовки и (при необходимости)
+ *          отправки сигнала с image.
+ * @note    1. Не очень хорошая идея совещать прорисовку и отправку
+ *             сигнала, т.к. это разные вещи.
+ *          2. Антипаттерн: Используются разные алгоритмы для
+ *             получения image когда нужно отправлять сигнал и когда нет.
+ *             Зато это быстрее.
+ */
 void CapturableVideoSurface::paint(QPainter *_painter, const QStyleOptionGraphicsItem */*_option*/, QWidget */*_widget*/)
 {
-	// TODO: Если нет необходимости отправлять, то не надо делать копию
 	if (mCurrentFrame.map(QAbstractVideoBuffer::ReadOnly)) {
-
-		QImage image(mCurrentFrame.bits(), mCurrentFrame.width(), mCurrentFrame.height(),
-			QVideoFrame::imageFormatFromPixelFormat(mCurrentFrame.pixelFormat()));
-
-		image = (surfaceFormat().scanLineDirection() == QVideoSurfaceFormat::BottomToTop) ? image.mirrored()
-																						  : image.copy();
-
-		mCurrentFrame.unmap();
-
-		_painter->drawImage(boundingRect(), image);
-
-		mFramePainted = true;
 
 		if (mSnapshotQueried) {
 
+			QImage image = QImage(mCurrentFrame.bits(), mCurrentFrame.width(), mCurrentFrame.height(),
+				QVideoFrame::imageFormatFromPixelFormat(mCurrentFrame.pixelFormat())).copy();
+
+			mCurrentFrame.unmap();
+
+			if (surfaceFormat().scanLineDirection() == QVideoSurfaceFormat::BottomToTop)
+				image = image.mirrored();
+
+			_painter->drawImage(boundingRect(), image);
+
+			mFramePainted = true;
 			mSnapshotQueried = false;
+
 			emit newSnapshot(image);
+		} else {
+
+			const QTransform oldTransform = _painter->transform();
+
+			if (surfaceFormat().scanLineDirection() == QVideoSurfaceFormat::BottomToTop) {
+				_painter->scale(1, -1);
+				_painter->translate(0, -boundingRect().height());
+			}
+
+			_painter->drawImage(boundingRect(), QImage(mCurrentFrame.bits(), mCurrentFrame.width(),
+				mCurrentFrame.height(), QVideoFrame::imageFormatFromPixelFormat(mCurrentFrame.pixelFormat())));
+
+			_painter->setTransform(oldTransform);
+
+			mFramePainted = true;
+
+			mCurrentFrame.unmap();
 		}
 	} else {
 
