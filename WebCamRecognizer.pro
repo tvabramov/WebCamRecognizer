@@ -57,3 +57,5 @@ TRANSLATIONS += WebCamRecognizer_ru.ts
 
 DEFINES += PROGRAMVERSION=\\\"1.0.0a\\\"
 
+# Comment it to use OpenGL
+DEFINES += QT_NO_OPENGL

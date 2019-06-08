@@ -26,13 +26,14 @@ void RecognitionItem::paint(QPainter *_painter, const QStyleOptionGraphicsItem *
 		return;
 	}
 
-	qreal sx = mBoundingRect.width() / static_cast<qreal>(mRec.image.width());
-	qreal sy = mBoundingRect.height() / static_cast<qreal>(mRec.image.height());
+	qreal sx = boundingRect().width() / static_cast<qreal>(mRec.image.width());
+	qreal sy = boundingRect().height() / static_cast<qreal>(mRec.image.height());
 
 	_painter->drawImage(boundingRect(), mRec.image);
 	_painter->setPen(QPen(QColor(0,255,0), 3));
 	_painter->setFont(QFont("Times", 10, QFont::Bold));
 
+	int chairs_count = 0;
 	for (const RecognizedItem &item : mRec.items)
 		if (item.confidence >= mConfThres && item.type == ITEMCLASSES::CHAIR) {
 
@@ -45,8 +46,13 @@ void RecognitionItem::paint(QPainter *_painter, const QStyleOptionGraphicsItem *
 			_painter->drawText(item.rect.topLeft().x() * sx + 5,
 							   item.rect.topLeft().y() * sx + 15,
 							   tr("Chair: %1 %").arg(item.confidence * 100.0, 0, 'f', 2));
+
+			++chairs_count;
 		}
 
+	_painter->setPen(QPen(QColor(0,255,255), 3));
+	_painter->drawText(boundingRect().bottomLeft().x() + 5, boundingRect().bottomLeft().y() - 10,
+		tr("Chairs Count = %1 [Duration = %2 ms]").arg(chairs_count).arg(mRec.duration_ms));
 }
 
 void RecognitionItem::setRecognition(Recognition _rec)

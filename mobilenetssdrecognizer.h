@@ -6,6 +6,7 @@
 #include <QImage>
 #include <QMutex>
 #include <opencv2/dnn.hpp>
+#include <chrono>
 
 enum class ITEMCLASSES
 {
@@ -32,6 +33,7 @@ struct Recognition {
 	QImage image;
 	QVector<RecognizedItem> items;
 	QString error;
+	int duration_ms;
 
 	Recognition() {}
 	Recognition(QImage _image) :

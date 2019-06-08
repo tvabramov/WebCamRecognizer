@@ -30,7 +30,9 @@ MobileNetSSDRecognizer::MobileNetSSDRecognizer(QObject *_parent) :
 }
 
 void MobileNetSSDRecognizer::recognize(QImage _image)
-{	
+{
+	auto time_begin = chrono::high_resolution_clock::now();
+
 	if (_image.isNull()) {
 		emit newRecognition(Recognition(tr("Null image")));
 		return;
@@ -66,14 +68,14 @@ void MobileNetSSDRecognizer::recognize(QImage _image)
 		int xRightTop = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
 		int yRightTop = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
 
-		QRect rect((int)xLeftBottom, (int)yLeftBottom,
-		(int)(xRightTop - xLeftBottom),
-		(int)(yRightTop - yLeftBottom));
+		QRect rect(xLeftBottom, yLeftBottom, xRightTop - xLeftBottom, yRightTop - yLeftBottom);
 
 		rec.items.push_back(RecognizedItem(static_cast<ITEMCLASSES>(idx), confidence, rect));
 	}
 
 	rec.image = _image;
+
+	rec.duration_ms = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - time_begin).count();
 
 	emit newRecognition(rec);
 }
