@@ -24,7 +24,7 @@ MainWindow::MainWindow(QWidget *_parent) :
 
 	{
 		mSurface = new CapturableVideoSurface(QRectF(QPointF(0, 0), QPointF(ui->graphicsViewFinder->width(),
-		ui->graphicsViewFinder->height())), nullptr, nullptr);
+		ui->graphicsViewFinder->height())));
 
 		QGraphicsScene *scene = new QGraphicsScene(this);
 		scene->addItem(mSurface);
@@ -39,8 +39,8 @@ MainWindow::MainWindow(QWidget *_parent) :
 
 	{
 		mRecItem = new RecognitionItem(QRectF(QPointF(0, 0), QPointF(ui->graphicsViewRecognition->width(), ui->graphicsViewRecognition->height())),
-			ui->sliderConfidenceThreshold->value(), nullptr, nullptr);
-		QGraphicsScene *scene = new QGraphicsScene(this);
+			ui->sliderConfidenceThreshold->value());
+		QGraphicsScene *scene = new QGraphicsScene;
 		scene->addItem(mRecItem);
 		ui->graphicsViewRecognition->setScene(scene);
 
@@ -77,7 +77,7 @@ MainWindow::MainWindow(QWidget *_parent) :
 
 	// Recognizer
 
-	mRecognizer = new MobileNetSSDRecognizer(nullptr);
+	mRecognizer = new MobileNetSSDRecognizer;
 	mRecognizerThread = new QThread(this);
 	mRecognizer->moveToThread(mRecognizerThread);
 	mRecognizerThread->start();
