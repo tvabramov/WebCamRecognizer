@@ -279,7 +279,7 @@ void MainWindow::onExposureCompensationSetted(int _index)
 	mCamera->exposure()->setExposureCompensation(_index * 0.5);
 }
 
-void MainWindow::onNewRecognition()
+void MainWindow::onNewRecognition(QSharedPointer<Recognition> /*_rec*/)
 {
 	if (ui->actionInfiniteRecognition->isChecked())
 		QTimer::singleShot(0, mSurface, SLOT(querySnapshot()));

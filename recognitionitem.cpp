@@ -1,5 +1,6 @@
 #include <QPainter>
 #include "recognitionitem.h"
+#include "mobilenetssdrecognizer.h"
 
 RecognitionItem::RecognitionItem(QRectF _boundingRect, int _thres_proc, QObject *_parent, QGraphicsItem *_parentItem) :
 	QObject(_parent), QGraphicsItem(_parentItem),
@@ -9,32 +10,37 @@ RecognitionItem::RecognitionItem(QRectF _boundingRect, int _thres_proc, QObject 
 
 QRectF RecognitionItem::boundingRect() const
 {
-	return mBoundingRect.isValid() ? mBoundingRect : QRectF(QPointF(0,0), QPointF(mRec.image.width(), mRec.image.height()));
+	if (mBoundingRect.isValid())
+		return mBoundingRect;
+	else if (mRec && !mRec->image().isNull())
+		return QRectF(QPointF(0, 0), QPointF(mRec->image().width(), mRec->image().height()));
+	else
+		return QRectF(QPointF(0, 0), QPointF(-1.0, -1.0));
 }
 
 void RecognitionItem::paint(QPainter *_painter, const QStyleOptionGraphicsItem */*_option*/, QWidget */*_widget*/)
 {
-	if (mRec.isEmpty())
+	if (!mRec)
 		return;
 
-	if (!mRec.isValid()) {
+	if (!mRec->isValid()) {
 
 		_painter->setPen(QPen(QColor(255,0,0), 3));
 		_painter->setFont(QFont("Times", 10, QFont::Bold));
-		_painter->drawText(0, boundingRect().height() / 2, tr("Error: %1").arg(mRec.error));
+		_painter->drawText(0, boundingRect().height() / 2, tr("Error: %1").arg(mRec->error()));
 
 		return;
 	}
 
-	qreal sx = boundingRect().width() / static_cast<qreal>(mRec.image.width());
-	qreal sy = boundingRect().height() / static_cast<qreal>(mRec.image.height());
+	qreal sx = boundingRect().width() / static_cast<qreal>(mRec->image().width());
+	qreal sy = boundingRect().height() / static_cast<qreal>(mRec->image().height());
 
-	_painter->drawImage(boundingRect(), mRec.image);
+	_painter->drawImage(boundingRect(), mRec->image());
 	_painter->setPen(QPen(QColor(0,255,0), 3));
 	_painter->setFont(QFont("Times", 10, QFont::Bold));
 
 	int chairs_count = 0;
-	for (const RecognizedItem &item : mRec.items)
+	for (const RecognizedItem &item : mRec->items())
 		if (item.confidence >= mConfThres && item.type == ITEMCLASSES::CHAIR) {
 
 			// TODO: Сделать более цивильно
@@ -52,10 +58,10 @@ void RecognitionItem::paint(QPainter *_painter, const QStyleOptionGraphicsItem *
 
 	_painter->setPen(QPen(QColor(0,255,255), 3));
 	_painter->drawText(boundingRect().bottomLeft().x() + 5, boundingRect().bottomLeft().y() - 10,
-		tr("Chairs Count = %1 [Duration = %2 ms]").arg(chairs_count).arg(mRec.duration_ms));
+		tr("Chairs Count = %1 [Duration = %2 ms]").arg(chairs_count).arg(mRec->durationMs()));
 }
 
-void RecognitionItem::setRecognition(Recognition _rec)
+void RecognitionItem::setRecognition(QSharedPointer<Recognition> _rec)
 {
 	mRec = _rec;
 

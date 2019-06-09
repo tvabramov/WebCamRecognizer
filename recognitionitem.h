@@ -3,7 +3,8 @@
 
 #include <QObject>
 #include <QGraphicsItem>
-#include "mobilenetssdrecognizer.h"
+
+class Recognition;
 
 class RecognitionItem : public QObject, public QGraphicsItem
 {
@@ -17,12 +18,12 @@ public:
 	void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr);
 
 public slots:
-	void setRecognition(Recognition _rec);
+	void setRecognition(QSharedPointer<Recognition> _rec);
 	void setConfThresholdProc(int _thres);
 
 private:
 	QRectF mBoundingRect;
-	Recognition mRec;
+	QSharedPointer<Recognition> mRec;
 	double mConfThres;
 };
 

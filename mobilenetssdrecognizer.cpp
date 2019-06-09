@@ -1,4 +1,5 @@
 #include <QFile>
+#include <QSharedPointer>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include "mobilenetssdrecognizer.h"
@@ -10,7 +11,7 @@ using namespace std;
 MobileNetSSDRecognizer::MobileNetSSDRecognizer(QObject *_parent) :
 	QObject(_parent)
 {
-	qRegisterMetaType<Recognition>("Recognition");
+	qRegisterMetaType<QSharedPointer<Recognition>>("QSharedPointer<Recognition>");
 
 	QFile fileProto(":/model/MobileNetSSD_deploy.prototxt.txt");
 	fileProto.open(QIODevice::ReadOnly);
@@ -29,7 +30,7 @@ void MobileNetSSDRecognizer::recognize(QImage _image)
 
 	if (_image.isNull()) {
 
-		emit newRecognition(Recognition(tr("Null image")));
+		emit newRecognition(QSharedPointer<Recognition>(new Recognition(tr("Null image"))));
 		return;
 	}
 
@@ -38,7 +39,7 @@ void MobileNetSSDRecognizer::recognize(QImage _image)
 
 	if (_image.isNull() || _image.format() != QImage::Format_RGB32) {
 
-		emit newRecognition(Recognition(tr("Unsupported image format")));
+		emit newRecognition(QSharedPointer<Recognition>(new Recognition(tr("Unsupported image format"))));
 		return;
 	}
 
@@ -52,7 +53,7 @@ void MobileNetSSDRecognizer::recognize(QImage _image)
 	mNet.setInput(blob);
 	Mat detections = mNet.forward();
 	Mat detectionMat(detections.size[2], detections.size[3], CV_32F, detections.ptr<float>());
-	Recognition rec;
+	QList<RecognizedItem> items;
 	for (int i = 0; i < detectionMat.rows; i++) {
 
 		float confidence = detectionMat.at<float>(i, 2);
@@ -65,13 +66,10 @@ void MobileNetSSDRecognizer::recognize(QImage _image)
 
 		QRect rect(xLeftBottom, yLeftBottom, xRightTop - xLeftBottom, yRightTop - yLeftBottom);
 
-		rec.items.push_back(RecognizedItem(static_cast<ITEMCLASSES>(idx), confidence, rect));
+		items.push_back(RecognizedItem(static_cast<ITEMCLASSES>(idx), confidence, rect));
 	}
 
-	rec.image = _image;
-
-	rec.duration_ms = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - time_begin).count();
-
-	emit newRecognition(rec);
+	emit newRecognition(QSharedPointer<Recognition>(new Recognition(_image, items,
+		chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - time_begin).count())));
 }
 

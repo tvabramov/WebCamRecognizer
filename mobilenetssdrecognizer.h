@@ -14,8 +14,8 @@ enum class ITEMCLASSES
 	SOFR, TRAIN, TVMONITOR, INVALID, COUNT
 };
 
-struct RecognizedItem {
-
+struct RecognizedItem
+{
 	ITEMCLASSES type;
 	double confidence;
 	QRect rect;
@@ -26,22 +26,26 @@ struct RecognizedItem {
 		type(_type), confidence(_confidence), rect(_rect) {}
 };
 
-struct Recognition {
+class Recognition
+{
+public:
+	Recognition() : mDurationMs(0) {}
+	Recognition(QImage _image, const QList<RecognizedItem>& _items, int _duration_ms) :
+		mImage(_image.copy()), mItems(_items), mDurationMs(_duration_ms) {}
+	Recognition(QString _error) : mError(_error), mDurationMs(0) {}
 
-	QImage image;
-	QVector<RecognizedItem> items;
-	QString error;
-	int duration_ms;
+	const QImage& image() const { return mImage; }
+	const QList<RecognizedItem>& items() const { return mItems; }
+	QString error() const { return mError; }
+	int durationMs() const { return mDurationMs; }
 
-	Recognition() {}
-	Recognition(QImage _image) :
-		image(_image.copy()) {}
-	Recognition(QImage _image, QVector<RecognizedItem> _items) :
-		image(_image.copy()), items(_items) {}
-	Recognition(QString _error) : error(_error) {}
+	bool isValid() const { return !mImage.isNull() && mError.isEmpty(); }
 
-	bool isValid() { return !image.isNull() && error.isEmpty(); }
-	bool isEmpty() { return image.isNull() && error.isEmpty(); }
+private:
+	QImage mImage;
+	QList<RecognizedItem> mItems;
+	QString mError;
+	int mDurationMs;
 };
 
 class MobileNetSSDRecognizer : public QObject
@@ -52,7 +56,7 @@ public:
 	explicit MobileNetSSDRecognizer(QObject *_parent = nullptr);
 
 signals:
-	void newRecognition(Recognition);
+	void newRecognition(QSharedPointer<Recognition> _rec);
 
 public slots:
 	void recognize(QImage _image);

@@ -31,7 +31,7 @@ private slots:
 	void onCameraStateChanged(QCamera::State _state);
 	void onLockStatusChanged(QCamera::LockStatus _status, QCamera::LockChangeReason _reason);
 	void onExposureCompensationSetted(int _index);
-	void onNewRecognition();
+	void onNewRecognition(QSharedPointer<Recognition> _rec);
 	void onAboutProgram();
 
 protected:
