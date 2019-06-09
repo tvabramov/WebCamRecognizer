@@ -80,11 +80,13 @@ MainWindow::MainWindow(QWidget *_parent) :
 	mRecognizer = new MobileNetSSDRecognizer;
 	mRecognizerThread = new QThread(this);
 	mRecognizer->moveToThread(mRecognizerThread);
-	mRecognizerThread->start();
 
+	connect(mRecognizerThread, &QThread::finished, mRecognizer, &RecognitionItem::deleteLater);
 	connect(mSurface, &CapturableVideoSurface::newSnapshot, mRecognizer, &MobileNetSSDRecognizer::recognize);
 	connect(mRecognizer, &MobileNetSSDRecognizer::newRecognition, this, &MainWindow::onNewRecognition);
 	connect(mRecognizer, &MobileNetSSDRecognizer::newRecognition, mRecItem, &RecognitionItem::setRecognition);
+
+	mRecognizerThread->start();
 
 	// Tool bar
 
@@ -100,13 +102,10 @@ MainWindow::MainWindow(QWidget *_parent) :
 
 MainWindow::~MainWindow()
 {
-	delete ui;
-
 	mRecognizerThread->quit();
 	mRecognizerThread->wait();
 
-	mRecognizer->deleteLater();
-	mRecognizerThread->deleteLater();
+	delete ui;
 }
 
 void MainWindow::setCamera(const QCameraInfo &_cameraInfo)
