@@ -4,9 +4,7 @@
 #include <QObject>
 #include <QRect>
 #include <QImage>
-#include <QMutex>
 #include <opencv2/dnn.hpp>
-#include <chrono>
 
 enum class ITEMCLASSES
 {

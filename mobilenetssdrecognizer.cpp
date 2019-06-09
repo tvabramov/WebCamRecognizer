@@ -1,5 +1,4 @@
 #include <QFile>
-#include <QRect>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include "mobilenetssdrecognizer.h"
@@ -21,12 +20,7 @@ MobileNetSSDRecognizer::MobileNetSSDRecognizer(QObject *_parent) :
 	fileModel.open(QIODevice::ReadOnly);
 	QByteArray bufferModel = fileModel.readAll();
 
-	vector<uchar> bufferProto2, bufferModel2;
-
-	copy(bufferProto.begin(), bufferProto.end(), back_inserter(bufferProto2));
-	copy(bufferModel.begin(), bufferModel.end(), back_inserter(bufferModel2));
-
-	mNet = readNetFromCaffe(bufferProto2, bufferModel2);
+	mNet = readNetFromCaffe(bufferProto.data(), bufferProto.size(), bufferModel.data(), bufferModel.size());
 }
 
 void MobileNetSSDRecognizer::recognize(QImage _image)
@@ -34,6 +28,7 @@ void MobileNetSSDRecognizer::recognize(QImage _image)
 	auto time_begin = chrono::high_resolution_clock::now();
 
 	if (_image.isNull()) {
+
 		emit newRecognition(Recognition(tr("Null image")));
 		return;
 	}

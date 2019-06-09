@@ -17,8 +17,8 @@ public:
 
 	bool present(const QVideoFrame &_frame);
 	QRectF boundingRect() const;
-	void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr);
-	bool start(const QVideoSurfaceFormat &format);
+	void paint(QPainter *_painter, const QStyleOptionGraphicsItem *_option, QWidget *_widget = nullptr);
+	bool start(const QVideoSurfaceFormat &_format);
 	void stop();
 
 signals:

@@ -2,7 +2,12 @@
 #include <QMessageBox>
 #include <QtWidgets>
 #include <QThread>
+#if !defined(QT_NO_OPENGL)
 #include <QGLWidget>
+#endif
+#include "capturablevideosurface.h"
+#include "mobilenetssdrecognizer.h"
+#include "recognitionitem.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -55,6 +60,7 @@ MainWindow::MainWindow(QWidget *_parent) :
 	QActionGroup *camerasGroup = new QActionGroup(this);
 	camerasGroup->setExclusive(true);
 	for (const QCameraInfo &cameraInfo : QCameraInfo::availableCameras()) {
+
 		QAction *videoDeviceAction = new QAction(cameraInfo.description(), camerasGroup);
 		videoDeviceAction->setCheckable(true);
 		videoDeviceAction->setData(QVariant::fromValue(cameraInfo));
@@ -135,10 +141,12 @@ void MainWindow::setCamera(const QCameraInfo &_cameraInfo)
 	onExposureCompensationSetted(ui->sliderExposureCompensation->value());
 
 	if (mCamera->isAvailable()) {
+
 		ui->actionToggleCamera->setEnabled(true);
 		mCamera->start();
 	}
 	else {
+
 		ui->actionToggleCamera->setEnabled(false);
 		QMessageBox::warning(this, tr("Camera Error"), tr("Camera is not available"));
 	}
@@ -177,26 +185,17 @@ void MainWindow::keyReleaseEvent(QKeyEvent *_event)
 
 void MainWindow::onCameraSelected(QAction *_action)
 {
-	if (_action)
-		setCamera(qvariant_cast<QCameraInfo>(_action->data()));
-	else
-		setCamera(QCameraInfo::defaultCamera());
+	setCamera(_action ? qvariant_cast<QCameraInfo>(_action->data()) : QCameraInfo::defaultCamera());
 }
 
 void MainWindow::onCameraToggled(bool _on)
 {	
-	if (_on)
-		mCamera->start();
-	else
-		mCamera->stop();
+	return _on ? mCamera->start() : mCamera->stop();
 }
 
 void MainWindow::onLockToggled(bool _on)
 {
-	if (_on)
-		mCamera->searchAndLock();
-	else
-		mCamera->unlock();
+	return _on ? mCamera->searchAndLock() : mCamera->unlock();
 }
 
 void MainWindow::onInfiniteRecognitionToggled(bool _on)
@@ -214,8 +213,8 @@ void MainWindow::onInfiniteRecognitionToggled(bool _on)
 void MainWindow::onCameraStateChanged(QCamera::State _state)
 {
 	switch (_state) {
-		case QCamera::ActiveState:
 
+		case QCamera::ActiveState:
 			ui->actionToggleCamera->blockSignals(true);
 			ui->actionToggleCamera->setChecked(true);
 			ui->actionToggleCamera->setText(tr("Camera Off"));
@@ -229,6 +228,7 @@ void MainWindow::onCameraStateChanged(QCamera::State _state)
 			ui->actionInfiniteRecognition->setEnabled(true);
 
 			break;
+
 		default:
 			ui->actionToggleCamera->blockSignals(true);
 			ui->actionToggleCamera->setChecked(false);
@@ -247,6 +247,7 @@ void MainWindow::onCameraStateChanged(QCamera::State _state)
 void MainWindow::onLockStatusChanged(QCamera::LockStatus _status, QCamera::LockChangeReason /*_reason*/)
 {
 	switch (_status) {
+
 		case QCamera::Unlocked:
 			ui->actionToggleLock->blockSignals(true);
 			ui->actionToggleLock->setChecked(false);
@@ -279,7 +280,7 @@ void MainWindow::onExposureCompensationSetted(int _index)
 	mCamera->exposure()->setExposureCompensation(_index * 0.5);
 }
 
-void MainWindow::onNewRecognition(Recognition /*_rec*/)
+void MainWindow::onNewRecognition()
 {
 	if (ui->actionInfiniteRecognition->isChecked())
 		QTimer::singleShot(0, mSurface, SLOT(querySnapshot()));

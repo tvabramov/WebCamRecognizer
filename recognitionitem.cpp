@@ -1,5 +1,5 @@
-#include "recognitionitem.h"
 #include <QPainter>
+#include "recognitionitem.h"
 
 RecognitionItem::RecognitionItem(QRectF _boundingRect, int _thres_proc, QObject *_parent, QGraphicsItem *_parentItem) :
 	QObject(_parent), QGraphicsItem(_parentItem),

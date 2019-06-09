@@ -12,6 +12,7 @@ QList<QVideoFrame::PixelFormat> CapturableVideoSurface::supportedPixelFormats(
 	QAbstractVideoBuffer::HandleType _handleType) const
 {
 	if (_handleType == QAbstractVideoBuffer::NoHandle) {
+
 		return QList<QVideoFrame::PixelFormat>()
 			<< QVideoFrame::Format_RGB32
 			<< QVideoFrame::Format_ARGB32
@@ -19,13 +20,14 @@ QList<QVideoFrame::PixelFormat> CapturableVideoSurface::supportedPixelFormats(
 			<< QVideoFrame::Format_RGB565
 			<< QVideoFrame::Format_RGB555;
 	} else {
+
 		return QList<QVideoFrame::PixelFormat>();
 	}
 }
 
 QRectF CapturableVideoSurface::boundingRect() const
 {
-	return mBoundingRect.isValid() ? mBoundingRect : QRectF(QPointF(0,0), surfaceFormat().sizeHint());
+	return mBoundingRect.isValid() ? mBoundingRect : QRectF(QPointF(0, 0), surfaceFormat().sizeHint());
 }
 
 /**
@@ -85,11 +87,13 @@ void CapturableVideoSurface::paint(QPainter *_painter, const QStyleOptionGraphic
 bool CapturableVideoSurface::present(const QVideoFrame &_frame)
 {
 	if (!mFramePainted) {
+
 		if (!QAbstractVideoSurface::isActive())
 			setError(StoppedError);
 
 		return false;
 	} else {
+
 		mCurrentFrame = _frame;
 		mFramePainted = false;
 
@@ -99,18 +103,19 @@ bool CapturableVideoSurface::present(const QVideoFrame &_frame)
 	}
 }
 
-bool CapturableVideoSurface::start(const QVideoSurfaceFormat &format)
+bool CapturableVideoSurface::start(const QVideoSurfaceFormat &_format)
 {
-	if (isFormatSupported(format)) {
+	if (isFormatSupported(_format)) {
 
 		mFramePainted = true;
 
-		QAbstractVideoSurface::start(format);
+		QAbstractVideoSurface::start(_format);
 
 		prepareGeometryChange();
 
 		return true;
 	} else {
+
 		return false;
 	}
 }

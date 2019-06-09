@@ -3,13 +3,16 @@
 
 #include <QMainWindow>
 #include <QCamera>
-#include "capturablevideosurface.h"
-#include "mobilenetssdrecognizer.h"
-#include "recognitionitem.h"
 
 namespace Ui {
 class MainWindow;
 }
+
+class QThread;
+class CapturableVideoSurface;
+class MobileNetSSDRecognizer;
+class RecognitionItem;
+class Recognition;
 
 class MainWindow : public QMainWindow
 {
@@ -28,7 +31,7 @@ private slots:
 	void onCameraStateChanged(QCamera::State _state);
 	void onLockStatusChanged(QCamera::LockStatus _status, QCamera::LockChangeReason _reason);
 	void onExposureCompensationSetted(int _index);
-	void onNewRecognition(Recognition _rec);
+	void onNewRecognition();
 	void onAboutProgram();
 
 protected:
