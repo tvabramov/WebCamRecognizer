@@ -134,7 +134,14 @@ void MainWindow::setCamera(const QCameraInfo &_cameraInfo)
 	onLockStatusChanged(mCamera->lockStatus(), QCamera::UserRequest);
 	onExposureCompensationSetted(ui->sliderExposureCompensation->value());
 
-	mCamera->start();
+	if (mCamera->isAvailable()) {
+		ui->actionToggleCamera->setEnabled(true);
+		mCamera->start();
+	}
+	else {
+		ui->actionToggleCamera->setEnabled(false);
+		QMessageBox::warning(this, tr("Camera Error"), tr("Camera is not available"));
+	}
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *_event)
@@ -177,7 +184,7 @@ void MainWindow::onCameraSelected(QAction *_action)
 }
 
 void MainWindow::onCameraToggled(bool _on)
-{
+{	
 	if (_on)
 		mCamera->start();
 	else
