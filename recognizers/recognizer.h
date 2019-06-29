@@ -1,10 +1,9 @@
-#ifndef MOBILENETSSDRECOGNIZER_H
-#define MOBILENETSSDRECOGNIZER_H
+#ifndef RECOGNIZER_H
+#define RECOGNIZER_H
 
 #include <QObject>
 #include <QRect>
 #include <QImage>
-#include <opencv2/dnn.hpp>
 
 enum class ITEMCLASSES
 {
@@ -48,21 +47,18 @@ private:
 	int mDurationMs;
 };
 
-class MobileNetSSDRecognizer : public QObject
+class Recognizer : public QObject
 {
 	Q_OBJECT
 
 public:
-	explicit MobileNetSSDRecognizer(QObject *_parent = nullptr);
+	explicit Recognizer(QObject *_parent = nullptr);
 
 signals:
 	void newRecognition(QSharedPointer<Recognition> _rec);
 
 public slots:
-	void recognize(QImage _image);
-
-private:
-	cv::dnn::Net mNet;
+	virtual void recognize(QImage _image) = 0;
 };
 
-#endif // MOBILENETSSDRECOGNIZER_H
+#endif // RECOGNIZER_H

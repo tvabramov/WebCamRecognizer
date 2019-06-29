@@ -1,6 +1,6 @@
 #include <QPainter>
 #include "recognitionitem.h"
-#include "mobilenetssdrecognizer.h"
+#include "recognizers/recognizer.h"
 
 RecognitionItem::RecognitionItem(QRectF _boundingRect, int _thres_proc, QObject *_parent, QGraphicsItem *_parentItem) :
 	QObject(_parent), QGraphicsItem(_parentItem),
@@ -41,7 +41,7 @@ void RecognitionItem::paint(QPainter *_painter, const QStyleOptionGraphicsItem *
 
 	int chairs_count = 0;
 	for (const RecognizedItem &item : mRec->items())
-		if (item.confidence >= mConfThres && item.type == ITEMCLASSES::CHAIR) {
+		if (item.confidence >= mConfThres /*&& item.type == ITEMCLASSES::CHAIR*/) {
 
 			// TODO: Сделать более цивильно
 			_painter->drawRect(item.rect.topLeft().x() * sx,

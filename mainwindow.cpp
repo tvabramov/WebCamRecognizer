@@ -6,7 +6,7 @@
 #include <QGLWidget>
 #endif
 #include "capturablevideosurface.h"
-#include "mobilenetssdrecognizer.h"
+#include "recognizers/mobilenetssdrecognizer.h"
 #include "recognitionitem.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -82,9 +82,9 @@ MainWindow::MainWindow(QWidget *_parent) :
 	mRecognizer->moveToThread(mRecognizerThread);
 
 	connect(mRecognizerThread, &QThread::finished, mRecognizer, &RecognitionItem::deleteLater);
-	connect(mSurface, &CapturableVideoSurface::newSnapshot, mRecognizer, &MobileNetSSDRecognizer::recognize);
-	connect(mRecognizer, &MobileNetSSDRecognizer::newRecognition, this, &MainWindow::onNewRecognition);
-	connect(mRecognizer, &MobileNetSSDRecognizer::newRecognition, mRecItem, &RecognitionItem::setRecognition);
+	connect(mSurface, &CapturableVideoSurface::newSnapshot, mRecognizer, &Recognizer::recognize);
+	connect(mRecognizer, &Recognizer::newRecognition, this, &MainWindow::onNewRecognition);
+	connect(mRecognizer, &Recognizer::newRecognition, mRecItem, &RecognitionItem::setRecognition);
 
 	mRecognizerThread->start();
 

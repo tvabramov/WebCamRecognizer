@@ -36,13 +36,15 @@ LIBS += -L$$(OPENCV_SDK_DIR)/x86/mingw/lib \
 SOURCES += main.cpp\
         mainwindow.cpp \
     capturablevideosurface.cpp \
-    mobilenetssdrecognizer.cpp \
-    recognitionitem.cpp
+    recognizers/mobilenetssdrecognizer.cpp \
+    recognitionitem.cpp \
+    recognizers/recognizer.cpp
 
 HEADERS  += mainwindow.h \
     capturablevideosurface.h \
-    mobilenetssdrecognizer.h \
-    recognitionitem.h
+    recognizers/mobilenetssdrecognizer.h \
+    recognitionitem.h \
+    recognizers/recognizer.h
 
 FORMS    += mainwindow.ui
 

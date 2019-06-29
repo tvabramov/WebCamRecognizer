@@ -10,7 +10,7 @@ class MainWindow;
 
 class QThread;
 class CapturableVideoSurface;
-class MobileNetSSDRecognizer;
+class Recognizer;
 class RecognitionItem;
 class Recognition;
 
@@ -42,7 +42,7 @@ private:
     Ui::MainWindow *ui;
 	QCamera *mCamera;
 	CapturableVideoSurface *mSurface;
-	MobileNetSSDRecognizer *mRecognizer;
+	Recognizer *mRecognizer;
 	QThread *mRecognizerThread;
 	RecognitionItem *mRecItem;
 
