@@ -29,9 +29,10 @@ QMAKE_CXXFLAGS += -Wall
 INCLUDEPATH += $$(OPENCV_SDK_DIR)/include
 
 LIBS += -L$$(OPENCV_SDK_DIR)/x86/mingw/lib \
-        -lopencv_core410        \
-        -lopencv_dnn410         \
-        -lopencv_imgproc410
+        -lopencv_core411        \
+        -lopencv_dnn411         \
+        -lopencv_imgproc411     \
+        -lopencv_tracking411
 
 SOURCES += main.cpp\
         mainwindow.cpp \
