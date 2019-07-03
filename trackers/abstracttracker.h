@@ -1,10 +1,10 @@
-#ifndef TRACKER_H
-#define TRACKER_H
+#ifndef ABSTRACTTRACKER_H
+#define ABSTRACTTRACKER_H
 
 #include <QObject>
 #include <QPointF>
 #include <QSharedPointer>
-#include "recognizers/recognizer.h"
+#include "recognizers/abstractrecognizer.h"
 
 struct TrackedItem
 {
@@ -36,12 +36,12 @@ private:
 	QString mError;
 };
 
-class Tracker : public QObject
+class AbstractTracker : public QObject
 {
 	Q_OBJECT
 
 public:
-	explicit Tracker(QObject *_parent = nullptr);
+	explicit AbstractTracker(QObject *_parent = nullptr);
 
 signals:
 	void newTrack(QSharedPointer<Track> _track);
@@ -50,4 +50,4 @@ public slots:
 	virtual void track(QSharedPointer<Recognition> _rec) = 0;
 };
 
-#endif // TRACKER_H
+#endif // ABSTRACTTRACKER_H

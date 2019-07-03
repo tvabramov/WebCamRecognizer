@@ -7,7 +7,7 @@ using namespace std;
 
 
 TestTracker::TestTracker(QObject *_parent) :
-	Tracker(_parent)
+	AbstractTracker(_parent)
 {
 	TrackerCSRT::create();
 }

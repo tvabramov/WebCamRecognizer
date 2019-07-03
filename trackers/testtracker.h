@@ -1,9 +1,9 @@
 #ifndef TESTTRACKER_H
 #define TESTTRACKER_H
 
-#include "tracker.h"
+#include "abstracttracker.h"
 
-class TestTracker : public Tracker
+class TestTracker : public AbstractTracker
 {
 	Q_OBJECT
 

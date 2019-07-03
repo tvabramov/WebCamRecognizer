@@ -82,9 +82,9 @@ MainWindow::MainWindow(QWidget *_parent) :
 	mRecognizer->moveToThread(mRecognizerThread);
 
 	connect(mRecognizerThread, &QThread::finished, mRecognizer, &RecognitionItem::deleteLater);
-	connect(mSurface, &CapturableVideoSurface::newSnapshot, mRecognizer, &Recognizer::recognize);
-	connect(mRecognizer, &Recognizer::newRecognition, this, &MainWindow::onNewRecognition);
-	connect(mRecognizer, &Recognizer::newRecognition, mRecItem, &RecognitionItem::setRecognition);
+	connect(mSurface, &CapturableVideoSurface::newSnapshot, mRecognizer, &AbstractRecognizer::recognize);
+	connect(mRecognizer, &AbstractRecognizer::newRecognition, this, &MainWindow::onNewRecognition);
+	connect(mRecognizer, &AbstractRecognizer::newRecognition, mRecItem, &RecognitionItem::setRecognition);
 
 	mRecognizerThread->start();
 

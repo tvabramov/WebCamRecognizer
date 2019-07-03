@@ -9,7 +9,7 @@ using namespace dnn;
 using namespace std;
 
 MobileNetSSDRecognizer::MobileNetSSDRecognizer(QObject *_parent) :
-	Recognizer(_parent)
+	AbstractRecognizer(_parent)
 {
 	QFile fileProto(":/model/MobileNetSSD_deploy.prototxt.txt");
 	fileProto.open(QIODevice::ReadOnly);

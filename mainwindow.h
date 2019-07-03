@@ -10,7 +10,7 @@ class MainWindow;
 
 class QThread;
 class CapturableVideoSurface;
-class Recognizer;
+class AbstractRecognizer;
 class RecognitionItem;
 class Recognition;
 
@@ -42,7 +42,7 @@ private:
     Ui::MainWindow *ui;
 	QCamera *mCamera;
 	CapturableVideoSurface *mSurface;
-	Recognizer *mRecognizer;
+	AbstractRecognizer *mRecognizer;
 	QThread *mRecognizerThread;
 	RecognitionItem *mRecItem;
 

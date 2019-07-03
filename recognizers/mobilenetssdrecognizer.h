@@ -3,9 +3,9 @@
 
 #include <QObject>
 #include <opencv2/dnn.hpp>
-#include "recognizer.h"
+#include "abstractrecognizer.h"
 
-class MobileNetSSDRecognizer : public Recognizer
+class MobileNetSSDRecognizer : public AbstractRecognizer
 {
 	Q_OBJECT
 

@@ -1,5 +1,5 @@
-#ifndef RECOGNIZER_H
-#define RECOGNIZER_H
+#ifndef ABSTRACTRECOGNIZER_H
+#define ABSTRACTRECOGNIZER_H
 
 #include <QObject>
 #include <QRect>
@@ -47,12 +47,12 @@ private:
 	int mDurationMs;
 };
 
-class Recognizer : public QObject
+class AbstractRecognizer : public QObject
 {
 	Q_OBJECT
 
 public:
-	explicit Recognizer(QObject *_parent = nullptr);
+	explicit AbstractRecognizer(QObject *_parent = nullptr);
 
 signals:
 	void newRecognition(QSharedPointer<Recognition> _rec);
@@ -61,4 +61,4 @@ public slots:
 	virtual void recognize(QImage _image) = 0;
 };
 
-#endif // RECOGNIZER_H
+#endif // ABSTRACTRECOGNIZER_H

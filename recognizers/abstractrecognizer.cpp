@@ -1,7 +1,7 @@
-#include "recognizer.h"
+#include "abstractrecognizer.h"
 #include <QSharedPointer>
 
-Recognizer::Recognizer(QObject *_parent) :
+AbstractRecognizer::AbstractRecognizer(QObject *_parent) :
 	QObject(_parent)
 {
 	qRegisterMetaType<QSharedPointer<Recognition>>("QSharedPointer<Recognition>");

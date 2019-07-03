@@ -39,17 +39,17 @@ SOURCES += main.cpp\
     capturablevideosurface.cpp \
     recognizers/mobilenetssdrecognizer.cpp \
     recognitionitem.cpp \
-    recognizers/recognizer.cpp \
-    trackers/tracker.cpp \
-    trackers/testtracker.cpp
+    trackers/testtracker.cpp \
+    recognizers/abstractrecognizer.cpp \
+    trackers/abstracttracker.cpp
 
 HEADERS  += mainwindow.h \
     capturablevideosurface.h \
     recognizers/mobilenetssdrecognizer.h \
     recognitionitem.h \
-    recognizers/recognizer.h \
-    trackers/tracker.h \
-    trackers/testtracker.h
+    trackers/testtracker.h \
+    recognizers/abstractrecognizer.h \
+    trackers/abstracttracker.h
 
 FORMS    += mainwindow.ui
 
