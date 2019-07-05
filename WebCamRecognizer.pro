@@ -31,6 +31,7 @@ INCLUDEPATH += $$(OPENCV_SDK_DIR)/include
 LIBS += -L$$(OPENCV_SDK_DIR)/x86/mingw/lib \
         -lopencv_core411        \
         -lopencv_dnn411         \
+        -lopencv_imgcodecs411   \
         -lopencv_imgproc411     \
         -lopencv_tracking411
 
@@ -41,7 +42,8 @@ SOURCES += main.cpp\
     recognitionitem.cpp \
     trackers/testtracker.cpp \
     recognizers/abstractrecognizer.cpp \
-    trackers/abstracttracker.cpp
+    trackers/abstracttracker.cpp \
+    trackitem.cpp
 
 HEADERS  += mainwindow.h \
     capturablevideosurface.h \
@@ -49,7 +51,8 @@ HEADERS  += mainwindow.h \
     recognitionitem.h \
     trackers/testtracker.h \
     recognizers/abstractrecognizer.h \
-    trackers/abstracttracker.h
+    trackers/abstracttracker.h \
+    trackitem.h
 
 FORMS    += mainwindow.ui
 

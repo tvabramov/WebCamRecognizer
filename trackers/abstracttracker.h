@@ -13,7 +13,7 @@ struct TrackedItem
 
 	TrackedItem() {}
 	TrackedItem(RecognizedItem _item) :
-		item(_item) {}
+		item(std::move(_item)) { track.push_back(item.rect.center()); }
 };
 
 class Track

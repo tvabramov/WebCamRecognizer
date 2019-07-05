@@ -2,6 +2,8 @@
 #define TESTTRACKER_H
 
 #include "abstracttracker.h"
+#include <opencv2/opencv.hpp>
+#include <opencv2/tracking.hpp>
 
 class TestTracker : public AbstractTracker
 {
@@ -14,7 +16,8 @@ public slots:
 	virtual void track(QSharedPointer<Recognition> _rec) override;
 
 protected:
-	Track mTrack;
+	QSharedPointer<Track> mTrack;
+	cv::Ptr<cv::MultiTracker> mCvMultiTracker;
 };
 
 #endif // TESTTRACKER_H

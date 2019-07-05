@@ -8,6 +8,8 @@
 #include "capturablevideosurface.h"
 #include "recognizers/mobilenetssdrecognizer.h"
 #include "recognitionitem.h"
+#include "trackitem.h"
+#include "trackers/testtracker.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -38,10 +40,12 @@ MainWindow::MainWindow(QWidget *_parent) :
 	// Recognition GraphicItem and GraphicView
 
 	{
-		mRecItem = new RecognitionItem(QRectF(QPointF(0, 0), QPointF(ui->graphicsViewRecognition->width(), ui->graphicsViewRecognition->height())),
+		//mRecItem = new RecognitionItem(QRectF(QPointF(0, 0), QPointF(ui->graphicsViewRecognition->width(), ui->graphicsViewRecognition->height())),
+		//	ui->sliderConfidenceThreshold->value());
+		mTrackItem = new TrackItem(QRectF(QPointF(0, 0), QPointF(ui->graphicsViewRecognition->width(), ui->graphicsViewRecognition->height())),
 			ui->sliderConfidenceThreshold->value());
 		QGraphicsScene *scene = new QGraphicsScene;
-		scene->addItem(mRecItem);
+		scene->addItem(/*mRecItem*/mTrackItem);
 		ui->graphicsViewRecognition->setScene(scene);
 
 		#if !defined(QT_NO_OPENGL)
@@ -50,7 +54,7 @@ MainWindow::MainWindow(QWidget *_parent) :
 	}
 
 	connect(ui->actionRecognize, &QAction::triggered, mSurface, &CapturableVideoSurface::querySnapshot);
-	connect(ui->sliderConfidenceThreshold, &QSlider::valueChanged, mRecItem, &RecognitionItem::setConfThresholdProc);
+	connect(ui->sliderConfidenceThreshold, &QSlider::valueChanged, /*mRecItem*/mTrackItem, &TrackItem::setConfThresholdProc);
 	connect(ui->actionInfiniteRecognition, &QAction::triggered, this, &MainWindow::onInfiniteRecognitionToggled);
 	connect(ui->actionAboutProgram, &QAction::triggered, this, &MainWindow::onAboutProgram);
 	connect(ui->actionAboutQt, &QAction::triggered, qApp, &QApplication::aboutQt);
@@ -84,9 +88,21 @@ MainWindow::MainWindow(QWidget *_parent) :
 	connect(mRecognizerThread, &QThread::finished, mRecognizer, &RecognitionItem::deleteLater);
 	connect(mSurface, &CapturableVideoSurface::newSnapshot, mRecognizer, &AbstractRecognizer::recognize);
 	connect(mRecognizer, &AbstractRecognizer::newRecognition, this, &MainWindow::onNewRecognition);
-	connect(mRecognizer, &AbstractRecognizer::newRecognition, mRecItem, &RecognitionItem::setRecognition);
+//	connect(mRecognizer, &AbstractRecognizer::newRecognition, mRecItem, &RecognitionItem::setRecognition);
 
 	mRecognizerThread->start();
+
+	// Tracker
+
+	mTracker = new TestTracker;
+	mTrackerThread = new QThread(this);
+	mTracker->moveToThread(mTrackerThread);
+
+	connect(mTrackerThread, &QThread::finished, mTracker, &RecognitionItem::deleteLater);
+	connect(mRecognizer, &AbstractRecognizer::newRecognition, mTracker, &AbstractTracker::track);
+	connect(mTracker, &AbstractTracker::newTrack, mTrackItem, &TrackItem::setTrack);
+
+	mTrackerThread->start();
 
 	// Tool bar
 
@@ -104,6 +120,9 @@ MainWindow::~MainWindow()
 {
 	mRecognizerThread->quit();
 	mRecognizerThread->wait();
+
+	mTrackerThread->quit();
+	mTrackerThread->wait();
 
 	delete ui;
 }

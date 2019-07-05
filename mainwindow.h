@@ -13,6 +13,8 @@ class CapturableVideoSurface;
 class AbstractRecognizer;
 class RecognitionItem;
 class Recognition;
+class AbstractTracker;
+class TrackItem;
 
 class MainWindow : public QMainWindow
 {
@@ -44,7 +46,10 @@ private:
 	CapturableVideoSurface *mSurface;
 	AbstractRecognizer *mRecognizer;
 	QThread *mRecognizerThread;
-	RecognitionItem *mRecItem;
+	//RecognitionItem *mRecItem;
+	TrackItem *mTrackItem;
+	AbstractTracker *mTracker;
+	QThread *mTrackerThread;
 
 	void setCamera(const QCameraInfo &_cameraInfo);
 };
