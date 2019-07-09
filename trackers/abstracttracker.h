@@ -30,6 +30,18 @@ public:
 
 	bool isValid() const { return !mImage.isNull() && mError.isEmpty(); }
 
+//	Track& operator=(const Track& other) noexcept
+//	{
+//		if (this != &other) {
+
+//			mImage = other.mImage.copy();
+//			mItems = other.mItems;
+//			mError = other.mError;
+//		}
+
+//		return *this;
+//	}
+
 private:
 	QImage mImage;
 	QList<TrackedItem> mItems;

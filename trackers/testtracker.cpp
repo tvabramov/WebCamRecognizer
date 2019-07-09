@@ -8,7 +8,7 @@ using namespace std;
 TestTracker::TestTracker(QObject *_parent) :
 	AbstractTracker(_parent),
 	mTrack(nullptr),
-	mCvMultiTracker(MultiTracker::create())
+	mCvTracker(TrackerCSRT::create())
 {
 }
 
@@ -20,68 +20,72 @@ void TestTracker::track(QSharedPointer<Recognition> _rec)
 		return;
 	}
 
-//	if (mTrack.items().isEmpty()) {
+	auto main_item = std::find_if(_rec->items().begin(), _rec->items().end(),
+		[](const auto &el){ return el.confidence > 0.9 && el.type == ITEMCLASSES::PERSON; });
 
-		// TODO: не обязательно всегда копировать _rec->image()
-		QImage image = _rec->image().convertToFormat(QImage::Format_Grayscale8);
+	if (main_item == _rec->items().end()) {
 
-		if (image.isNull() || image.format() != QImage::Format_Grayscale8) {
+		emit newTrack(QSharedPointer<Track>(new Track(tr("None objects to track"))));
+		return;
+	}
 
-			emit newTrack(QSharedPointer<Track>(new Track(tr("Unsupported image format"))));
+	// TODO: не обязательно всегда копировать _rec->image()
+	QImage image = _rec->image().convertToFormat(QImage::Format_RGB32);
+
+	if (image.isNull() || image.format() != QImage::Format_RGB32) {
+
+		emit newTrack(QSharedPointer<Track>(new Track(tr("Unsupported image format"))));
+		return;
+	}
+
+	Mat frame1;
+
+	cvtColor(Mat(image.height(), image.width(), CV_8UC4, const_cast<uchar*>(image.bits()),
+		static_cast<size_t>(image.bytesPerLine())), frame1, cv::COLOR_BGRA2BGR);
+
+	if (!mTrack) {
+
+		if (!mCvTracker->init(frame1, Rect2d(main_item->rect.left(), main_item->rect.top(),
+			main_item->rect.width(), main_item->rect.height()))) {
+
+			emit newTrack(QSharedPointer<Track>(new Track(tr("Can not init CV Tracker"))));
 			return;
 		}
 
-		Mat frame1(image.height(), image.width(), CV_8UC1, const_cast<uchar*>(image.bits()),
-			static_cast<size_t>(image.bytesPerLine()));
-
-
-
-		//Mat depth_vis; // destination image for visualization
-		//normalize(frame1, frame1, 0, 255, CV_MINMAX);
-		//depth_vis.convertTo(depth_vis, CV_8UC4);
-
-
-		//cvtColor(Mat(image.height(), image.width(), CV_8UC4, const_cast<uchar*>(image.bits()),
-		//	static_cast<size_t>(image.bytesPerLine())), frame1, cv::COLOR_BGRA2GRAY);
-
-		// https://answers.opencv.org/question/116453/fourier-descriptor-in-opencv/
-
-		Mat frame2 = Mat::zeros(image.height(), image.width(), CV_32FC1);//Mat frame2(image.height(), image.width(), CV_8UC1/*CV_32FC2*/);
-		frame1.convertTo(frame2, CV_32FC1, 1.0/255.0);
-
-		QVector<uchar> f1;
-		for (auto curr = frame1.data; curr != frame1.dataend; ++curr)
-			f1.push_back(*curr);
-
-		QVector<uchar> f2;
-		for (auto curr = frame2.data; curr != frame2.dataend; ++curr)
-			f2.push_back(*curr);
-//source.convertTo(OriginalFloat, CV_32FC1, 1.0/255.0);
-
-qDebug() << f1;
-qDebug() << f2;
-//qDebug() <<sizeof(frame2.data);
-cv::imwrite("D:/out1.bmp", frame1);
-cv::imwrite("D:/out2.bmp", frame2);
-
-
-		vector<Rect> bboxes;
-		for (const auto &item : _rec->items())
-			bboxes.push_back(Rect(item.rect.left(), item.rect.top(), item.rect.width(), item.rect.height()));
-
-		//Ptr<Tracker> t =TrackerCSRT::create();
-		//t->init(frame2, Rect2d(bboxes[0]));
-		//for (const auto& bbox : bboxes)
-		//	mCvMultiTracker->add(TrackerCSRT::create(), frame2, Rect2d(bbox));
+		//Rect2d rd;
+		//t->update(frame1, rd);
+//		for (const auto& bbox : bboxes)
+//			mCvMultiTracker->add(TrackerCSRT::create(), frame1, Rect2d(bbox));
 
 		QList<TrackedItem> trackedItems;
-		std::copy(_rec->items().begin(), _rec->items().end(), std::back_inserter(trackedItems));
+		trackedItems.push_back(TrackedItem(RecognizedItem(main_item->type, main_item->confidence, main_item->rect)));		// Recognized
+		trackedItems.push_back(TrackedItem(RecognizedItem(main_item->type, main_item->confidence, main_item->rect)));		// Tracked
+		//std::copy(_rec->items().begin(), _rec->items().end(), std::back_inserter(trackedItems));
 		mTrack = QSharedPointer<Track>(new Track(image, trackedItems));
 
 		emit newTrack(mTrack);
 
-		// create a video capture object to read videos
-//	} else {
+	} else {
 
-//	}
+		assert(mTrack->items().size() == 2);
+
+		Rect2d rd;
+		if (!mCvTracker->update(frame1, rd)) {
+
+			emit newTrack(QSharedPointer<Track>(new Track(tr("Can not relocate the object"))));
+			return;
+		}
+
+		auto trackedItems = mTrack->items();
+
+		trackedItems.front() = TrackedItem(*main_item);
+
+		trackedItems.back().item.rect.setRect(rd.x, rd.y, rd.width, rd.height);
+		trackedItems.back().track.push_back(QPointF(rd.x + rd.width / 2.0, rd.y + rd.height / 2.0));
+
+		mTrack = QSharedPointer<Track>(new Track(image, trackedItems));
+//qDebug() << rd.x + rd.width / 2 << " " << rd.y + rd.height / 2;
+
+		emit newTrack(mTrack);
+	}
 }

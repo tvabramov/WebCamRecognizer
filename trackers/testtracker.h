@@ -17,7 +17,8 @@ public slots:
 
 protected:
 	QSharedPointer<Track> mTrack;
-	cv::Ptr<cv::MultiTracker> mCvMultiTracker;
+	//cv::Ptr<cv::MultiTracker> mCvMultiTracker;
+	cv::Ptr<cv::Tracker> mCvTracker;
 };
 
 #endif // TESTTRACKER_H
