@@ -8,7 +8,8 @@ using namespace std;
 TestTracker::TestTracker(QObject *_parent) :
 	AbstractTracker(_parent),
 	mTrack(nullptr),
-	mCvTracker(TrackerCSRT::create())
+//	mCvTracker(TrackerCSRT::create()),
+	mCvMultiTracker(cv::MultiTracker::create())
 {
 }
 
@@ -45,17 +46,12 @@ void TestTracker::track(QSharedPointer<Recognition> _rec)
 
 	if (!mTrack) {
 
-		if (!mCvTracker->init(frame1, Rect2d(main_item->rect.left(), main_item->rect.top(),
-			main_item->rect.width(), main_item->rect.height()))) {
+		if (!mCvMultiTracker->add(TrackerCSRT::create(), frame1,
+			Rect2d(main_item->rect.left(), main_item->rect.top(), main_item->rect.width(), main_item->rect.height()))) {
 
 			emit newTrack(QSharedPointer<Track>(new Track(tr("Can not init CV Tracker"))));
 			return;
 		}
-
-		//Rect2d rd;
-		//t->update(frame1, rd);
-//		for (const auto& bbox : bboxes)
-//			mCvMultiTracker->add(TrackerCSRT::create(), frame1, Rect2d(bbox));
 
 		QList<TrackedItem> trackedItems;
 		trackedItems.push_back(TrackedItem(RecognizedItem(main_item->type, main_item->confidence, main_item->rect)));		// Recognized
@@ -69,12 +65,14 @@ void TestTracker::track(QSharedPointer<Recognition> _rec)
 
 		assert(mTrack->items().size() == 2);
 
-		Rect2d rd;
-		if (!mCvTracker->update(frame1, rd)) {
+		if (!mCvMultiTracker->update(frame1)) {
 
 			emit newTrack(QSharedPointer<Track>(new Track(tr("Can not relocate the object"))));
 			return;
 		}
+
+		Rect2d rd = mCvMultiTracker->getObjects()[0];
+
 
 		auto trackedItems = mTrack->items();
 
@@ -84,7 +82,6 @@ void TestTracker::track(QSharedPointer<Recognition> _rec)
 		trackedItems.back().track.push_back(QPointF(rd.x + rd.width / 2.0, rd.y + rd.height / 2.0));
 
 		mTrack = QSharedPointer<Track>(new Track(image, trackedItems));
-//qDebug() << rd.x + rd.width / 2 << " " << rd.y + rd.height / 2;
 
 		emit newTrack(mTrack);
 	}
