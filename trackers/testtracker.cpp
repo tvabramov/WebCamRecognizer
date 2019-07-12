@@ -21,15 +21,6 @@ void TestTracker::track(QSharedPointer<Recognition> _rec)
 		return;
 	}
 
-	auto main_item = std::find_if(_rec->items().begin(), _rec->items().end(),
-		[](const auto &el){ return el.confidence > 0.9 && el.type == ITEMCLASSES::PERSON; });
-
-	if (main_item == _rec->items().end()) {
-
-		emit newTrack(QSharedPointer<Track>(new Track(tr("None objects to track"))));
-		return;
-	}
-
 	// TODO: не обязательно всегда копировать _rec->image()
 	QImage image = _rec->image().convertToFormat(QImage::Format_RGB32);
 
@@ -46,24 +37,34 @@ void TestTracker::track(QSharedPointer<Recognition> _rec)
 
 	if (!mTrack) {
 
-		if (!mCvMultiTracker->add(TrackerCSRT::create(), frame1,
-			Rect2d(main_item->rect.left(), main_item->rect.top(), main_item->rect.width(), main_item->rect.height()))) {
+		QList<RecognizedItem> recItems;
+		std::copy_if(_rec->items().begin(), _rec->items().end(), back_inserter(recItems),
+			[](const auto &el){ return el.confidence > 0.9 && el.type == ITEMCLASSES::PERSON; });
 
-			emit newTrack(QSharedPointer<Track>(new Track(tr("Can not init CV Tracker"))));
+		if (recItems.isEmpty()) {
+
+			emit newTrack(QSharedPointer<Track>(new Track(tr("There is no objects to track"))));
 			return;
 		}
 
+		for (const auto & el: recItems)
+			if (!mCvMultiTracker->add(TrackerCSRT::create(), frame1,
+				Rect2d(el.rect.left(), el.rect.top(), el.rect.width(), el.rect.height()))) {
+
+				emit newTrack(QSharedPointer<Track>(new Track(tr("Can not init CV Tracker"))));
+				return;
+			}
+
 		QList<TrackedItem> trackedItems;
-		trackedItems.push_back(TrackedItem(RecognizedItem(main_item->type, main_item->confidence, main_item->rect)));		// Recognized
-		trackedItems.push_back(TrackedItem(RecognizedItem(main_item->type, main_item->confidence, main_item->rect)));		// Tracked
-		//std::copy(_rec->items().begin(), _rec->items().end(), std::back_inserter(trackedItems));
+		std::copy(recItems.begin(), recItems.end(), back_inserter(trackedItems));
+
 		mTrack = QSharedPointer<Track>(new Track(image, trackedItems));
 
 		emit newTrack(mTrack);
 
 	} else {
 
-		assert(mTrack->items().size() == 2);
+		assert(static_cast<int>(mCvMultiTracker->getObjects().size()) == mTrack->items().size());
 
 		if (!mCvMultiTracker->update(frame1)) {
 
@@ -71,15 +72,15 @@ void TestTracker::track(QSharedPointer<Recognition> _rec)
 			return;
 		}
 
-		Rect2d rd = mCvMultiTracker->getObjects()[0];
-
-
 		auto trackedItems = mTrack->items();
 
-		trackedItems.front() = TrackedItem(*main_item);
+		for (int i = 0; i < trackedItems.size(); ++i) {
 
-		trackedItems.back().item.rect.setRect(rd.x, rd.y, rd.width, rd.height);
-		trackedItems.back().track.push_back(QPointF(rd.x + rd.width / 2.0, rd.y + rd.height / 2.0));
+			auto rd = mCvMultiTracker->getObjects()[i];
+
+			trackedItems[i].item.rect.setRect(rd.x, rd.y, rd.width, rd.height);
+			trackedItems[i].track.push_back(QPointF(rd.x + rd.width / 2.0, rd.y + rd.height / 2.0));
+		}
 
 		mTrack = QSharedPointer<Track>(new Track(image, trackedItems));
 

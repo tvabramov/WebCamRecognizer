@@ -41,34 +41,21 @@ void TrackItem::paint(QPainter *_painter, const QStyleOptionGraphicsItem */*_opt
 
 	_painter->setFont(QFont("Times", 10, QFont::Bold));
 
-	assert(mTrack->items().size() == 2);
-
-
-	//for (const TrackedItem &item : mTrack->items())
-		//if (item.item.confidence >= mConfThres && item.item.type == ITEMCLASSES::PERSON) {
-			_painter->setPen(QPen(QColor(0,255,0), 3));
+	for (const TrackedItem &item : mTrack->items())
+		if (item.item.confidence >= mConfThres && item.item.type == ITEMCLASSES::PERSON) {
+			_painter->setPen(QPen(QColor(0,0,255), 3));
 			// TODO: Сделать более цивильно
-			_painter->drawRect(mTrack->items()[0].item.rect.topLeft().x() * sx,
-							   mTrack->items()[0].item.rect.topLeft().y() * sy,
-							   mTrack->items()[0].item.rect.width() * sx,
-							   mTrack->items()[0].item.rect.height() * sy);
+			_painter->drawRect(item.item.rect.topLeft().x() * sx,
+							   item.item.rect.topLeft().y() * sy,
+							   item.item.rect.width() * sx,
+							   item.item.rect.height() * sy);
 
-			_painter->drawText(mTrack->items()[0].item.rect.topLeft().x() * sx + 5,
-							   mTrack->items()[0].item.rect.topLeft().y() * sx + 15,
+			_painter->drawText(item.item.rect.topLeft().x() * sx + 5,
+							   item.item.rect.topLeft().y() * sx + 15,
 							   tr("Person: %1 %").arg(mTrack->items()[0].item.confidence * 100.0, 0, 'f', 2));
 
 
-			_painter->setPen(QPen(QColor(0,0,255), 3));
-			// TODO: Сделать более цивильно
-			_painter->drawRect(mTrack->items()[1].item.rect.topLeft().x() * sx,
-							   mTrack->items()[1].item.rect.topLeft().y() * sy,
-							   mTrack->items()[1].item.rect.width() * sx,
-							   mTrack->items()[1].item.rect.height() * sy);
-
-			_painter->drawText(mTrack->items()[1].item.rect.topLeft().x() * sx + 5,
-							   mTrack->items()[1].item.rect.topLeft().y() * sx + 15,
-							   tr("Person [tracked]"));
-		//}
+		}
 
 	//_painter->setPen(QPen(QColor(0,255,255), 3));
 	//_painter->drawText(boundingRect().bottomLeft().x() + 5, boundingRect().bottomLeft().y() - 10,
